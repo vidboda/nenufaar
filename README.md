@@ -118,7 +118,7 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 ##Workflow
 
-![Nenufaar workflow](img/nenufaar2_3.png)
+![Nenufaar workflow](img/nenufaar_2.3.2.png)
 
 
 ##Operation
