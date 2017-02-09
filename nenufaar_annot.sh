@@ -91,7 +91,7 @@ echo "##########################################################################
 ###############		Get arguments from command line			#################################
 
 
-while [[ "$#" -gt 1 ]]
+while [[ "$#" -gt 0 ]]
 do
 KEY="$1"
 case "${KEY}" in
@@ -498,7 +498,7 @@ do
 			TXT_FILE=${NEW_FILE}
 		fi
 
-		
+
 		POSITION='7'
 		POSITION_END='9'
 		if [ "${LIST}" != '' ];then
@@ -509,9 +509,9 @@ do
 		echo "BASH/AWK/JOIN/CUT : Add OMIM annotation - `date` ID_ANALYSE : ${ID} - SAMPLE : ${SAMPLE_FILE}"
 		echo "COMMAND: LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=\$${POSITION}; \$${POSITION}=\"\"; print k\"\t\""'$0'"}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print "'$0'" | \"sort -k1,1\"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt"
 		echo "#############################################################################################"
-		
+
 		#genemapR file MUST be SORTED with cat genemapR.txt | awk 'NR == 1; NR > 1 {print $0 | "LANG=en_EN sort -k1,1"}' > genemapR_sorted.txt
-		
+
 		LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=$'${POSITION}'; $'${POSITION}'=""; print k"\t"$0}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print $0 | "sort -k1,1"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt
 		#LOCALE=C
 		#sorted file on gene names - if we want to revert and sort on chr/pos, replace ">${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" with "| sort -k2,3 >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" or -k3,4 if marked file

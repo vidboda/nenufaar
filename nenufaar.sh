@@ -128,7 +128,7 @@ echo "##########################################################################
 
 ###############		Get arguments from command line			#################################
 
-while [[ "$#" -gt 1 ]]
+while [[ "$#" -gt 0 ]]
 do
 KEY="$1"
 case "${KEY}" in
@@ -199,7 +199,7 @@ case "${KEY}" in
 	-id|--processus_id)
 	ID="$2"
 	shift
-	;;	
+	;;
 	-l|--gene_list)
 	LIST="$2"
 	shift
@@ -266,7 +266,11 @@ if [ "${ANNOTATOR}" != 'annovar' ] && [ "${LIST}" != '' ]; then
 fi
 
 if [ "${LIST}" != '' ] && [ ! -e "${LIST}" ]; then
-	echo 'GENE LIST FILE DOES NOT EXIST -> see help (-h)' && exit 1;
+	echo 'GENE LIST FILE ${LIST} DOES NOT EXIST -> see help (-h)' && exit 1;
+fi
+
+if [ "${LIST}" != '' ]; then
+	${LIST} = "-l ${LIST}"
 fi
 
 ### got from http://stackoverflow.com/questions/8063228/how-do-i-check-if-a-variable-exists-in-a-list-in-bash
@@ -374,7 +378,7 @@ echo "DCOV : ${DCOV}"
 echo "HSMETRICS : ${HSMETRICS}"
 echo "FILTER : ${FILTER}"
 echo "BAM_ONLY : ${BAM_ONLY}"
-echo "VC_ONLY : ${VC_ONLY}"
+echo "VC_ONLY : ${VC_ONLY}";
 echo "GENE LIST: ${LIST}"
 echo "INPUT PATH  : ${INPUT_PATH}"
 echo "OUTPUT PATH : ${OUTPUT_PATH}"
@@ -628,7 +632,7 @@ do
 			echo "GATK : DepthOfCoverage - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
 			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput  -L ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC"
 			echo "#############################################################################################"
-			
+
 			#https://software.broadinstitute.org/gatk/blog?id=2330 nt works with -omitIntervalsStatistics which is the interesting part
 			#${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T DepthOfCoverage -nt ${NB_THREAD} -R ${REF_PATH} -I ${BAM} -omitBaseOutput  -L ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
 			${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput  -L ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
@@ -675,7 +679,7 @@ do
 				CURRENT_SAMPLE_BASEDIR_NAME='MERGED_SAMPLES'
 				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}.bam
 				ckFileSz ${BAM}
-				MULTISAMPLE='-m=true'
+				MULTISAMPLE='-m true'
 				PLATYPUS_BUFFER='--bufferSize=10000'
 				DP_THRESHOLD=${TOTAL_SAMPLES}*10
 			fi
@@ -764,7 +768,7 @@ do
 
 				ckRes $? "PLATYPUS : VariantCalling second round  "
 				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf
-				
+
 				######
 				######PLATYPUS split MNPs into SNPs ---- replaced here with  --minFlank=0 which should not generate any MNPs
 				######But be bareful as it is also used to define read edges https://groups.google.com/forum/#!topic/platypus-users/bXgzdMjx3e8
@@ -772,7 +776,7 @@ do
 				#echo "#############################################################################################"
 				#echo "PLATYPUS : Split MNPs - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
 				#echo "COMMAND: ${SRUN_SIMPLE_COMMAND} /usr/bin/cat ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf | ${PYTHON} ${PLATYPUS_SPLIT_MNPS} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.splitted.vcf"
-				#echo "#############################################################################################"			
+				#echo "#############################################################################################"
 				#
 				#${SRUN_SIMPLE_COMMAND} /usr/bin/cat ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf | ${PYTHON} ${PLATYPUS_SPLIT_MNPS} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.splitted.vcf
 				#
@@ -828,18 +832,18 @@ do
 		if [ "${ANNOTATOR}" == 'annovar' ]; then
 			echo "#############################################################################################"
 			echo "NENUFAAR : ANNOTATION MODULE - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -g ${GENOME} -f ${FILTER} -l ${LIST} ${MULTISAMPLE}"
+			echo "COMMAND: ${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -g ${GENOME} -f ${FILTER} ${LIST} ${MULTISAMPLE}"
 			echo "#############################################################################################"
 
-			${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -g ${GENOME} -f ${FILTER} -l ${LIST} ${MULTISAMPLE}
+			${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -g ${GENOME} -f ${FILTER} ${LIST} ${MULTISAMPLE}
 		elif [ "${GENOME}" == 'hg19' ]; then
 			if [ "${ANNOTATOR}" == 'cava' ] || [ "${ANNOTATOR}" == 'merge' ];then
 				echo "#############################################################################################"
 				echo "NENUFAAR : ANNOTATION MODULE - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -l ${LIST} -g ${GENOME}"
+				echo "COMMAND: ${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ ${LIST} -g ${GENOME}"
 				echo "#############################################################################################"
 
-				${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -l ${LIST} -g ${GENOME}
+				${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ ${LIST} -g ${GENOME}
 			fi
 		fi
 		if [ "${VC_ONLY}" == 'true' ];then

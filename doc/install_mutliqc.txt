@@ -1,0 +1,16 @@
+#manque libpng et libfreetype - installation en local
+#dans /home/bauxd/work/neufaar/.freetype
+wget http://download.savannah.gnu.org/releases/freetype/freetype-2.4.0.tar.gz
+tar -xzvf freetype-2.4.0.tar.gz
+cd freetype-2.4.0/
+./configure --prefix=/home/bauxd/work/nenufaar/.freetype/
+make
+make install
+#et /home/bauxd/work/nenufaar/.libpng
+wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.26/libpng-1.6.26.tar.gz
+tar -xzvf libpng-1.6.26.tar.gz
+cd libpng-1.6.26/
+./configure --prefix=/home/bauxd/work/nenufaar/.libpng
+make
+make install
+export PATH=/home/bauxd/work/nenufaar/.freetype:/home/bauxd/work/nenufaar/.libpng:$PATH

@@ -109,7 +109,7 @@ source ./${CONFIG_FILE}
 
 ###############		Get arguments from command line			#################################
 
-while [[ "$#" -gt 1 ]]
+while [[ "$#" -gt 0 ]]
 do
 KEY="$1"
 case "${KEY}" in
@@ -224,6 +224,10 @@ if [ "${GENOME}" != 0 ]; then
 	validate_genome "${GENOME}" && echo "VALID GENOME OPTION = ${GENOME}" || { echo "INVALID GENOME OPTION = ${GENOME} -> see help (-h)" && exit 1; }
 fi
 
+if [ "${LIST}" != '' ]; then
+	${LIST} = "-l ${LIST}"
+fi
+
 DATE1=$(date +"%s")
 
 ##########################################################################
@@ -280,9 +284,9 @@ ckFileSz() {
 ###
 
 
-echo "launching nohup sh nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b"
+echo "launching nohup sh nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
 
-nohup ${SHELL} nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -b -id ${ID}
+nohup ${SHELL} nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b
 
 #I often have an error wifth a fi at the end of nenufaar script, so commented until fixed
 STATUS=$?
@@ -340,9 +344,9 @@ rm ${BAIS_FILES[@]}
 ###nenufaar generate single VCF for all samples
 ###
 
-echo "launching nohup sh nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} -vc"
+echo "launching nohup sh nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
 
-nohup ${SHELL} nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} -l ${LIST} -vc
+nohup ${SHELL} nenufaar_${NENUFAAR_VERSION}.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc
 
 STATUS=$?
 if [ "${STATUS}" -ne '0' ];then
