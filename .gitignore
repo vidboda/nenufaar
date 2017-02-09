@@ -1,0 +1,20 @@
+# ignore temporary files/rep
+.DS_Store
+.apm
+.ftpconfig
+.freetype
+.libpng
+log.txt
+.node-gyp
+nohup.out
+old
+.queue
+
+._*
+refData/*
+software/*
+intervals/*
+input/*
+output/*
+
+*.conf
