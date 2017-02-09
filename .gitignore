@@ -16,5 +16,7 @@ software/*
 intervals/*
 input/*
 output/*
-
 *.conf
+nenufaar.conf
+mnenufaar.conf
+nenufaar_annot.conf

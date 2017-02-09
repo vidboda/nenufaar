@@ -21,7 +21,7 @@ Contact: Villemin Jean-Philippe <jpvillemin@gmail.com>
 Usage: $(basename "$0") [options] -- program to align sequences, call variant and maybe more...
 
 Example:
-sh nenufaar_${version}.sh  -i=input/runX/
+sh nenufaar.sh  -i=input/runX/
 
 Arguments:
 
