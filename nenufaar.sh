@@ -110,7 +110,7 @@ CONFIG_FILE=nenufaar.conf
 
 #we check params against regexp
 
-UNKNOWN=$(cat nenufaar.conf  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
 if [ -n "${UNKNOWN}" ]; then
 	 echo "Error in config file. Not allowed lines:"
 	 echo "${UNKNOWN}"
@@ -352,7 +352,7 @@ ckFileSz() {
 
 RUN_BASEDIR_NAME=$(basename "${INPUT_PATH}")
 echo "BASE NAME RUN DIR : ${RUN_BASEDIR_NAME}"
-LOG_FILE=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${RUN_BASEDIR_NAME}_${ID}.log
+LOG_FILE="${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${RUN_BASEDIR_NAME}_${ID}.log"
 
 echo ""
 echo "#############################################################################################"
@@ -480,7 +480,8 @@ do
 
 			# Fastqc to Unaligned Bam
 			mkdir -p ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC
-			mkdir -p ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
+			mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
+			chmod 777 ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
 			${SRUN_24_COMMAND} ${FASTQC} --threads ${NB_THREAD} -d ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp ${SAMPLES_FILE_LIST[@]} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC
 
 			echo "#############################################################################################"
