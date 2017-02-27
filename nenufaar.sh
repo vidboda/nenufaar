@@ -814,6 +814,14 @@ do
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.gatk.vcf*
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.*
 			fi
+
+			echo "#############################################################################################"
+			echo "GATK : VariantEval - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			echo "COMMAND: "
+			echo "#############################################################################################"
+			
+			${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -gold ${INDEL2} -EV MetricsCollection
+			
 		fi
 		# CLEAN UP THE MESS
 		if [ "${CLEAN_UP}" == 'true' ];then
