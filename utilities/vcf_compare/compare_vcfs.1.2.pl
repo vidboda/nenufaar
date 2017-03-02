@@ -71,7 +71,8 @@ else {
 					else {	#if multiple variants at a given site we cumulate alt depth
 						for (my $j=1;$j<=$#value;$j++) {$alt_count .= $value[$j]}
 					}
-					$ab = sprintf('%.3f', ($alt_count/($alt_count+$value[0])));	#AB calculation
+					if ($alt_count > 0) {$ab = sprintf('%.3f', ($alt_count/($alt_count+$value[0])))}#AB calculation
+					else {$ab=0}
 				}
 
 				my $type = 'snv';
