@@ -234,9 +234,12 @@ done
 	#INPUT_PATH="${INPUT_PATH::-1}" this one works
 #fi
 
-########	add / to INPUT_PATH if needed
+########	add / to INPUT_PATH/OUTPUT_PATH if needed
 if [[ "${INPUT_PATH}" =~ .+[^\/]$ ]];then
 	INPUT_PATH="${INPUT_PATH}/"
+fi
+if [[ "${OUTPUT_PATH}" =~ .+[^\/]$ ]];then
+	OUTPUT_PATH="${OUTPUT_PATH}/"
 fi
 
 ########	change assembly if necessary				########
@@ -450,8 +453,8 @@ echo "ALL SAMPLES DIR PATH : ${SAMPLES_DIR_PATH_LIST[@]}"
 #used in VC only mode
 SEMAPH=0
 MULTISAMPLE=''
-TOTAL_SAMPLES="${#SAMPLES_DIR_PATH_LIST[@]}"
-echo "TOTAL SAMPLES TO ANALYSE : ${TOTAL_SAMPLES}"
+#TOTAL_SAMPLES="${#SAMPLES_DIR_PATH_LIST[@]}"
+#echo "TOTAL SAMPLES TO ANALYSE : ${TOTAL_SAMPLES}"
 
 ################## FOR TESTING PURPOSE REMOVE WHEN DONE AND CHANGE CONF FILE
 #GATK=software/GenomeAnalysisTK/3.5.0/GenomeAnalysisTK.jar
@@ -817,10 +820,10 @@ do
 
 			echo "#############################################################################################"
 			echo "GATK : VariantEval - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: "
+			echo "COMMAND: ${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -EV MetricsCollection"
 			echo "#############################################################################################"
 			
-			${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -gold ${INDEL2} -EV MetricsCollection
+			${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -EV MetricsCollection
 			
 		fi
 		# CLEAN UP THE MESS
