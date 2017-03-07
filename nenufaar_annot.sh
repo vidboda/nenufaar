@@ -515,7 +515,7 @@ do
 		LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=$'${POSITION}'; $'${POSITION}'=""; print k"\t"$0}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print $0 | "sort -k1,1"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt
 		#LOCALE=C
 		#sorted file on gene names - if we want to revert and sort on chr/pos, replace ">${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" with "| sort -k2,3 >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" or -k3,4 if marked file
-		ckRes $? "BASH/AWK/JOIN/CUT : Add OMIM annotation "
+		#ckRes $? "BASH/AWK/JOIN/CUT : Add OMIM annotation "
 		ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.final.txt
 
 		if [ "${CLEAN_UP}" == 'true' ];then
