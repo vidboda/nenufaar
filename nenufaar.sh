@@ -433,6 +433,11 @@ if [ "${USE_PLATYPUS}" == 'true' ];then
 	ckFileSz ${PLATYPUS_INTERVALS}
 	echo "PLATYPUS_INTERVALS : ${PLATYPUS_INTERVALS}"
 fi
+if [ "${#QUALIMAP}" -ne 0 ];then
+	INTERVALS_BED=${INPUT_PATH}Intervals.bed
+	ckFileSz ${INTERVALS_BED}
+	echo "INTERVALS_BED : ${INTERVALS_BED}"
+fi
 
 if [ "${HSMETRICS}" == 'true' ]; then
 	PICARD_INTERVALS_FILE=${INPUT_PATH}Picard.intervals.list
@@ -673,7 +678,19 @@ do
 
 			ckRes $? "GATK QualifyMissingIntervals "
 			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp
-
+			
+			
+			if [ "${#QUALIMAP}" -ne 0 ]; then			
+				echo "#############################################################################################"
+				echo "QUALIMAP : bamqc - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
+				echo "#############################################################################################"
+				
+				${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
+			
+			fi
+			
+			
 			#####
 			##### added Picard HSMetrics to get info on on target
 			#####
@@ -833,6 +850,7 @@ do
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_SAMBAMBA
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA
+			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/.${CURRENT_SAMPLE_BASEDIR_NAME}.*
 			if [ "${BAM_ONLY}" == 'false' ];then
 				rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.*
