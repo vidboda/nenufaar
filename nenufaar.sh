@@ -437,7 +437,7 @@ if [ "${USE_PLATYPUS}" == 'true' ];then
 	echo "PLATYPUS_INTERVALS : ${PLATYPUS_INTERVALS}"
 fi
 if [ "${#QUALIMAP}" -ne 0 ];then	
-	awk 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
+	awk 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
 	INTERVALS_BED=${INPUT_PATH}Intervals.bed
 	ckFileSz ${INTERVALS_BED}
 	echo "INTERVALS_BED : ${INTERVALS_BED}"
