@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.3.2
+VERSION=2.4
 
 USAGE="
 Program: nenufaar
@@ -35,7 +35,7 @@ Options:
     -a,		--annotator			Name of annotator: cava (output to textfile), annovar (output to both text and vcf file), vep, snpeff (both output to VCF), or merge to generate a merged cava/annovar file (hg19), default no annotation
     -f,		--filter			combined with annovar only, filters out variants with MAF > 1% in ExAC, ESP or 1KG, true/false, default false. Warning: does not produce the annotated VCF, only tab delimited file.
     -g,		--genome			Version of genome (assembly), either hg19 or hg38, default hg19
-    -p,		--protocol			Protocol used to select sequences: capture/amplicon, default capture
+    -p,		--protocol			Protocol used to select sequences: capture/amplicon/wgs, default capture
     -o,		--output_path			Sets the absolute path to output directory (must be created before script execution)
     -r,		--reference			Path to genome fasta reference file
     -snp,	--snp  				Sets the absolute path to vcf file for dbSNP
@@ -47,7 +47,7 @@ Options:
     -id,	--processus_id			defines a non-random processus id
     -l,		--gene_list path to a txt file with a #NAME and a list of genes to be marked in a annovar file
     -cu,	--clean_up			Boolean true, false: set to false to keep intermediate files (for dev purpose)
-    -wgs,	--whole_genome_sequencing	Boolean, true, false, default false: drops GATK DoC which is too long for WGS and drops intervals.file #and uses a specific intervals file (of 300000 regions) for GATK Base Recal to reduce computation times
+    -log,	--log-file			Path to log file
 
 
  Docs:
@@ -92,7 +92,10 @@ Format:
 chr:start-stop
 Example:
 chr1:124522-124985
-
+#tested
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p wgs
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p capture
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p amplicon
  "
 
 
@@ -209,8 +212,8 @@ case "${KEY}" in
 	CLEAN_UP="$2"
 	shift
 	;;
-	-wgs|--whole_genome_sequencing)			#default false
-	WGS="$2"
+	-log|--log-file)
+	LOG_FILE="$2"
 	shift
 	;;
 	-h|--help)
@@ -288,8 +291,8 @@ if [[ "${CALLER}" != 0 ]]; then
 	validate_caller "${CALLER}" && echo "VALID CALLER OPTION = ${CALLER}" || { echo "INVALID CALLER OPTION = ${CALLER} - EXITING" && exit 1; }
 fi
 
-validate_protocol() { echo "amplicon capture" | grep -F -q -w "$1"; }
-if [[ "${PROTOCOL}" != "capture" ]]; then
+validate_protocol() { echo "amplicon capture wgs" | grep -F -q -w "$1"; }
+if [ "${PROTOCOL}" != "capture" ]; then
 	validate_protocol "${PROTOCOL}" && echo "VALID PROTOCOL OPTION = ${PROTOCOL}" || { echo "INVALID PROTOCOL OPTION = ${PROTOCOL} - EXITING" && exit 1; }
 fi
 
@@ -299,7 +302,6 @@ validate_boolean "${FILTER}" && echo "VALID FILTER OPTION = ${FILTER}" || { echo
 validate_boolean "${USE_PLATYPUS}" && echo "VALID USE_PLATYPUS OPTION = ${USE_PLATYPUS}" || { echo "INVALID USE_PLATYPUS OPTION = ${USE_PLATYPUS} - EXITING" && exit 1; }
 validate_boolean "${CLEAN_UP}" && echo "VALID CLEAN_UP OPTION = ${CLEAN_UP}" || { echo "INVALID CLEAN_UP OPTION = ${CLEAN_UP} - EXITING" && exit 1; }
 validate_boolean "${HSMETRICS}" && echo "VALID HSMETRICS OPTION = ${HSMETRICS}" || { echo "INVALID HSMETRICS OPTION = ${HSMETRICS} - EXITING" && exit 1; }
-validate_boolean "${WGS}" && echo "VALID WGS OPTION = ${WGS}" || { echo "INVALID WGS OPTION = ${WGS} - EXITING" && exit 1; }
 
 if [[ "${DCOV}" =~ ^[0-9]+$ ]]; then
 	echo "VALID DCOV OPTION = ${DCOV}"
@@ -361,7 +363,9 @@ ckFileSz() {
 
 RUN_BASEDIR_NAME=$(basename "${INPUT_PATH}")
 echo "BASE NAME RUN DIR : ${RUN_BASEDIR_NAME}"
-LOG_FILE="${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${RUN_BASEDIR_NAME}_${ID}.log"
+if [ ${#LOG_FILE} -eq 0 ];then
+	LOG_FILE="${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${RUN_BASEDIR_NAME}_${ID}.log"
+fi
 
 echo ""
 echo "#############################################################################################"
@@ -388,7 +392,6 @@ echo "HSMETRICS : ${HSMETRICS}"
 echo "FILTER : ${FILTER}"
 echo "BAM_ONLY : ${BAM_ONLY}"
 echo "VC_ONLY : ${VC_ONLY}"
-echo "WGS : ${WGS}"
 echo "GENE LIST: ${LIST}"
 echo "INPUT PATH  : ${INPUT_PATH}"
 echo "OUTPUT PATH : ${OUTPUT_PATH}"
@@ -425,7 +428,7 @@ DATE1=$(date +"%s")
 
 
 INTERVALS_FILE=${INPUT_PATH}Intervals.list
-ckFileSz ${INTERVALS_FILE}
+ckFileSz "${INTERVALS_FILE}"
 echo "INTERVALS_FILE : ${INTERVALS_FILE}"
 INTERVALS_FILE_OPTION="-L ${INTERVALS_FILE}"
 
@@ -433,13 +436,13 @@ INTERVALS_FILE_OPTION="-L ${INTERVALS_FILE}"
 if [ "${USE_PLATYPUS}" == 'true' ];then
 	PLATYPUS_INTERVALS=${INPUT_PATH}Intervals.txt
 	cp ${INTERVALS_FILE} ${PLATYPUS_INTERVALS}
-	ckFileSz ${PLATYPUS_INTERVALS}
+	ckFileSz "${PLATYPUS_INTERVALS}"
 	echo "PLATYPUS_INTERVALS : ${PLATYPUS_INTERVALS}"
 fi
 if [ "${#QUALIMAP}" -ne 0 ];then	
 	awk 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
 	INTERVALS_BED=${INPUT_PATH}Intervals.bed
-	ckFileSz ${INTERVALS_BED}
+	ckFileSz "${INTERVALS_BED}"
 	echo "INTERVALS_BED : ${INTERVALS_BED}"
 fi
 
@@ -452,9 +455,8 @@ if [ "${HSMETRICS}" == 'true' ]; then
 	fi
 	echo "PICARD_INTERVALS_FILE : ${PICARD_INTERVALS_FILE}"
 	echo "PICARD_BAIT_INTERVALS_FILE : ${PICARD_BAIT_INTERVALS_FILE}"
-	ckFileSz ${PICARD_INTERVALS_FILE}
+	ckFileSz "${PICARD_INTERVALS_FILE}"
 fi
-
 
 #  Récupérer le nom des échantillons
 SAMPLES_DIR_PATH_LIST=$(find ${INPUT_PATH} -mindepth 1 -maxdepth 1 -type d)
@@ -483,7 +485,7 @@ do
 			echo "SAMPLES_FILE_LIST : ${SAMPLES_FILE_LIST[@]}"
 			for CURRENT_SAMPLE_FILE_PATH in "${SAMPLES_FILE_LIST[@]}"; do
 				echo "PATH TO FASTQ : ${CURRENT_SAMPLE_FILE_PATH}"
-				ckFileSz ${CURRENT_SAMPLE_FILE_PATH}
+				ckFileSz "${CURRENT_SAMPLE_FILE_PATH}"
 				CURRENT_SAMPLE_FILE_NAME=$(basename "${CURRENT_SAMPLE_FILE_PATH}")
 				echo "FASTQ FILE : ${CURRENT_SAMPLE_FILE_NAME}"
 			done
@@ -511,7 +513,7 @@ do
 			${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R "@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
 
 			ckRes $? "BWA Alignment ";
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
 			BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
 
 			echo "#############################################################################################"
@@ -522,7 +524,7 @@ do
 			${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}
 
 			ckRes $? "samtools sort ";
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam"
 			BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
 
 			#####markdup si capture- sinon index bam
@@ -566,10 +568,13 @@ do
 				echo "SAMBAMBA Index : Create Bam Index - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
 				echo "COMMAND: ${SRUN_24_COMMAND} ${SAMBAMBA} index -t ${NB_THREAD} ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai"
 				echo "#############################################################################################"
-
+				
+				mv ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam
+				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam
+				
 				${SRUN_24_COMMAND} ${SAMBAMBA} index -t ${NB_THREAD} ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai
 				ckRes $? "Sambamba Index "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai"
 			fi
 
 			#BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam
@@ -580,53 +585,55 @@ do
 			echo "#############################################################################################"
 
 			${SRUN_24_COMMAND} ${SAMBAMBA} flagstat -t${NB_THREAD} ${BAM} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_stats.txt
+			
+			if [ "${PROTOCOL}" != 'wgs' ];then
 
-			if [ "${CALLER}" == 'ug' ]; then
-				echo "#############################################################################################"
-				echo "GATK : RealignerTargetCreator - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g  ${GATK_OLD} -T RealignerTargetCreator -R ${REF_PATH} -I ${BAM} -nt ${NB_THREAD} -nct 1 -dcov ${DCOV} -known ${INDEL1} -known ${INDEL2} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals"
-				echo "#############################################################################################"
-
-				${SRUN_24_COMMAND} ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g  ${GATK_OLD} -T RealignerTargetCreator -R ${REF_PATH} -I ${BAM} -nt ${NB_THREAD} -nct 1 -dcov ${DCOV} -known ${INDEL1} -known ${INDEL2} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals
-
-				ckRes $? "GATK RealignerTargetCreator "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals
-
-				echo "#############################################################################################"
-				echo "GATK : IndelRealigner using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
-				echo "#############################################################################################"
-
-				${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
-
-				ckRes $? "GATK IndelRealigner "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
-				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
-
-			else
-				mv ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
-				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai  ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bai
-				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
-			fi
-			#for testing purpose -- NEEDS TO BE CLARIFIED AFTER VALIDATION: BR WITH WGS OR NOT
-			if [ "${WGS}" == 'false' ];then
-				INTERVALS_BR_FILE=${INTERVALS_FILE}
-				if [ "${WGS}" == 'true' ];then
-					INTERVALS_BR_FILE='refData/wgs/Intervals_BQSR_WGS.list'
+				if [ "${CALLER}" == 'ug' ]; then
+					echo "#############################################################################################"
+					echo "GATK : RealignerTargetCreator - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+					echo "COMMAND: ${SRUN_24_COMMAND} ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g  ${GATK_OLD} -T RealignerTargetCreator -R ${REF_PATH} -I ${BAM} -nt ${NB_THREAD} -nct 1 -dcov ${DCOV} -known ${INDEL1} -known ${INDEL2} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals"
+					echo "#############################################################################################"
+	
+					${SRUN_24_COMMAND} ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g  ${GATK_OLD} -T RealignerTargetCreator -R ${REF_PATH} -I ${BAM} -nt ${NB_THREAD} -nct 1 -dcov ${DCOV} -known ${INDEL1} -known ${INDEL2} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals
+	
+					ckRes $? "GATK RealignerTargetCreator "
+					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals"
+	
+					echo "#############################################################################################"
+					echo "GATK : IndelRealigner using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+					echo "COMMAND: ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+					echo "#############################################################################################"
+	
+					${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+	
+					ckRes $? "GATK IndelRealigner "
+					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam"
+					BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
+	
+				else
+					mv ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
+					mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai  ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bai
+					BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
 				fi
+				#for testing purpose -- NEEDS TO BE CLARIFIED AFTER VALIDATION: BR WITH WGS OR NOT
+			
+				#INTERVALS_BR_FILE=${INTERVALS_FILE}
+				#if [ "${PROTOCOL}" == 'wgs' ];then
+				#		INTERVALS_BR_FILE='refData/wgs/Intervals_BQSR_WGS.list'
+				#fi
 				echo "#############################################################################################"
 				echo "GATK : BaseRecalibrator and PrintReads using Queue - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH}  -L ${INTERVALS_BR_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run"
+				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run"
 				echo "#############################################################################################"
 	
-				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH}  -L ${INTERVALS_BR_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run
+				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run
 				# -disableJobReport#-jobNative "-cwd  ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/"
 	
 				ckRes $? "GATK BaseRecalibrator "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.recal.table
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.recal.table"
 	
 				ckRes $? "GATK PrintReads "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bam
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bam"
 				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bam
 
 				echo "#############################################################################################"
@@ -637,7 +644,7 @@ do
 				${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 9 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam ${BAM}
 	
 				ckRes $? "samtools sort ";
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam"
 				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
 	
 				echo "#############################################################################################"
@@ -648,7 +655,7 @@ do
 				${SRUN_24_COMMAND} ${SAMBAMBA} index -t ${NB_THREAD} ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bai
 	
 				ckRes $? "Sambamba Index "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam"
 				
 				#to do queue NO DepthOfCoverage PartitionType.NONE http://gatkforums.broadinstitute.org/wdl/discussion/1310/pipelining-the-gatk-with-queuecannot be split
 				echo "#############################################################################################"
@@ -659,52 +666,56 @@ do
 				#https://software.broadinstitute.org/gatk/blog?id=2330 nt works with -omitIntervalsStatistics which is the interesting part
 				#${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T DepthOfCoverage -nt ${NB_THREAD} -R ${REF_PATH} -I ${BAM} -omitBaseOutput  -L ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
 				${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
-			fi
+
 			
-			echo "#############################################################################################"
-			echo "GATK : DiagnoseTargets using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
-			echo "#############################################################################################"
-
-			${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
-
-			ckRes $? "GATK DiagnoseTargets "
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf
-
-			echo "#############################################################################################"
-			echo "GATK : QualifyMissingIntervals - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T QualifyMissingIntervals -R ${REF_PATH} -I ${BAM} -L ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_missing_intervals.list -targets ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp"
-			echo "#############################################################################################"
-
-			${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T QualifyMissingIntervals -R ${REF_PATH} -I ${BAM} -L ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_missing_intervals.list -targets ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp
-
-			ckRes $? "GATK QualifyMissingIntervals "
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp
+				echo "#############################################################################################"
+				echo "GATK : DiagnoseTargets using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+				echo "#############################################################################################"
+	
+				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+	
+				ckRes $? "GATK DiagnoseTargets "
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf"
+	
+				echo "#############################################################################################"
+				echo "GATK : QualifyMissingIntervals - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T QualifyMissingIntervals -R ${REF_PATH} -I ${BAM} -L ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_missing_intervals.list -targets ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp"
+				echo "#############################################################################################"
+	
+				${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T QualifyMissingIntervals -R ${REF_PATH} -I ${BAM} -L ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_missing_intervals.list -targets ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp
+	
+				ckRes $? "GATK QualifyMissingIntervals "
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_QMI.grp"
 			
-			if [ "${#QUALIMAP}" -ne 0 ]; then			
-				echo "#############################################################################################"
-				echo "QUALIMAP : bamqc - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
-				echo "#############################################################################################"
+				if [ "${#QUALIMAP}" -ne 0 ]; then			
+					echo "#############################################################################################"
+					echo "QUALIMAP : bamqc - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+					echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
+					echo "#############################################################################################"
+					
+					${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
 				
-				${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
+				fi
 			
-			fi
-			
-			
-			#####
-			##### added Picard HSMetrics to get info on on target
-			#####
-			if [ "${HSMETRICS}" == 'true' ]; then
-				echo "#############################################################################################"
-				echo "Picard : CollectHsMetrics - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectHsMetrics TARGET_INTERVALS=${PICARD_INTERVALS_FILE} BAIT_INTERVALS=${PICARD_BAIT_INTERVALS_FILE} INPUT=${BAM} OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.metrics TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD"
-				echo "#############################################################################################"
-
-				${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectHsMetrics TARGET_INTERVALS=${PICARD_INTERVALS_FILE} BAIT_INTERVALS=${PICARD_BAIT_INTERVALS_FILE} INPUT=${BAM} OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.tsv TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD
-
-				ckRes $? "Picard HsMetrics "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.tsv
+				#####
+				##### added Picard HSMetrics to get info on on target
+				#####
+				if [ "${HSMETRICS}" == 'true' ]; then
+					echo "#############################################################################################"
+					echo "Picard : CollectHsMetrics - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+					echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectHsMetrics TARGET_INTERVALS=${PICARD_INTERVALS_FILE} BAIT_INTERVALS=${PICARD_BAIT_INTERVALS_FILE} INPUT=${BAM} OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.metrics TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD"
+					echo "#############################################################################################"
+	
+					${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectHsMetrics TARGET_INTERVALS=${PICARD_INTERVALS_FILE} BAIT_INTERVALS=${PICARD_BAIT_INTERVALS_FILE} INPUT=${BAM} OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.tsv TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD
+	
+					ckRes $? "Picard HsMetrics "
+					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.tsv"
+				fi
+			else
+				mv ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
+				BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
+				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bai
 			fi
 		fi
 		#ony in standard and bam_only mode
@@ -738,7 +749,7 @@ do
 
 				ckRes $? "GATK : HaplotypeCaller  "
 			fi
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf"
 
 			#####
 			##### jvarkitfor homopolymer Annotation. Adds POLYX=Y in INFO fields
@@ -751,7 +762,7 @@ do
 			${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK ${VCF_POLYX} -R ${REF_PATH} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf
 
 			ckRes $? "JVARKIT : Homopolymer count  "
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf"
 
 			echo "#############################################################################################"
 			echo "GATK : VariantFiltration using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
@@ -762,7 +773,7 @@ do
 			${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}VariantFiltration.scala -V ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf -R ${REF_PATH} -dcov ${DCOV} -filterExpression "DP < ${DP_THRESHOLD}" -filterName "LowCoverage" -filterExpression "QUAL < 30.0" -filterName "LowQual" -filterExpression "QD < 1.5" -filterName "LowQD" -filterExpression "FS > 60.000" -filterName "StrandBias" -filterExpression "MQ < 10.00" -filterName "LowMappingQuality" -filterExpression "POLYX > 7" -filterName "R8" ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
 
 			ckRes $? "GATK : VariantFiltration  "
-			ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf"
 
 			if [ "${VC_ONLY}" == 'false' ];then
 				#####
@@ -776,7 +787,7 @@ do
 				${SRUN_SIMPLE_COMMAND} ${PERL} -wT ${IURC_VCF_AB} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf
 
 				ckRes $? "PERL : AlleleBalanceCompletion  ";
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf"
 			else
 				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf
 			fi
@@ -802,7 +813,7 @@ do
 				${SRUN_24_COMMAND} ${PYTHON} ${PLATYPUS} callVariants --minFlank=0 --bamFiles=${BAM} --refFile=${REF_PATH} --nCPU=${NB_THREAD} ${PLATYPUS_BUFFER} --regions=${PLATYPUS_INTERVALS} --output=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf
 
 				ckRes $? "PLATYPUS : VariantCalling second round  "
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf"
 
 				######
 				######PLATYPUS split MNPs into SNPs ---- replaced here with  --minFlank=0 which should not generate any MNPs
@@ -833,7 +844,7 @@ do
 				#combine: 1st GATK then Platypus vcfs, UNSORTED option only keeps GATK FORMAT fields - move to UNIQUIFY to keep both
 
 				ckRes $? "GATK : CombineVariants  ";
-				ckFileSz ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf
+				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf"
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.gatk.vcf*
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.*
 			fi
@@ -844,13 +855,14 @@ do
 			echo "#############################################################################################"
 			
 			${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -EV MetricsCollection
-			
 		fi
 		# CLEAN UP THE MESS
 		if [ "${CLEAN_UP}" == 'true' ];then
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE
-			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_SAMBAMBA
+			if [ "${PROTOCOL}" != 'wgs' ];then
+				rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_SAMBAMBA
+			fi
 			rm -R ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA
 			rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/.${CURRENT_SAMPLE_BASEDIR_NAME}.*
 			if [ "${BAM_ONLY}" == 'false' ];then
@@ -858,18 +870,22 @@ do
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.*
 			fi
 			if [ "${VC_ONLY}" == 'false' ];then
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
-				rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam
-				#rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam.bai
-				rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bai
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bam
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bai
+				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam			
+				
+				if [ "${PROTOCOL}" != 'wgs' ];then
+					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
+					#rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam.bai
+					rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bam
+					rm -f ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.bai
+					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam
+					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bai
+					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bam
+					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.bai
+					mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/QUEUE_LOG/
+					mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.*.out ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/QUEUE_LOG/
+				fi
 				#rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.*.out
-				mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/QUEUE_LOG/
-				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.*.out ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/QUEUE_LOG/
+				
 				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.bam
 				mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bai ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.bai
 			fi
