@@ -22,6 +22,7 @@ class performDiagnoseTargets extends QScript {
 
 		val diagnoseTargets = new DiagnoseTargets
 		diagnoseTargets.scatterCount = 28
+		//7 to get 12G per thread for WGS
 		diagnoseTargets.reference_sequence = referenceFile
 		diagnoseTargets.input_file :+= bamFile
 		diagnoseTargets.intervals = if (intervalFile == null) Nil else List(intervalFile)

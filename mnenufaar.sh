@@ -31,7 +31,7 @@ Options:
     -a, --annotator			Name of annotator: cava (output to textfile), annovar (output to both text and vcf file), vep, snpeff (both output to VCF), or merge to generate a merged cava/annovar file (hg19), default no annotation
     -f, --filter			combined with annovar only, filters out variants with MAF > 1% in ExAC, ESP or 1KG, true/false, default false. Warning: does not produce the annotated VCF, only tab delimited file.
     -g, --genome			Version of genome (assembly), either hg19 or hg38, default hg19
-    -p, --protocol			Protocol used to select sequences: capture/amplicon, default capture
+    -p, --protocol			Protocol used to select sequences: capture/amplicon/wgs, default capture
     -o,  --output_path			Sets the absolute path to output directory (must be created before script execution)
     -r,  --reference			Path to genome fasta reference file
     -snp, --snp  			Sets the absolute path to vcf file for dbSNP

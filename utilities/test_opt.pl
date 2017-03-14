@@ -54,11 +54,12 @@ my $arrayref = $weather->getweather()
 }
 
 
-BEGIN{
+#BEGIN{
   # allow to run from cron:
   # but doesn't work 8^(
-  $ENV{HTTP_PROXY} = 'http://proxy:port/'; 
-}
+  #$ENV{HTTP_PROXY} = 'http://proxy:port/'; 
+   BEGIN {delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};}
+#}
 
 
 END{
