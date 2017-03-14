@@ -1,4 +1,4 @@
-#Nenufaar v2.3.2
+#Nenufaar v2.4
 
 
 
@@ -18,10 +18,10 @@ Main steps are:
 
 *	Quality control of raw data (FastQC)
 *	Alignment (BWA-samtools)
-*	Indels realignment (GATK)
+*	Indels realignment (GATK, optional)
 *	Variant calling and filtration (GATK, jvarkit, home made perl script)
 *	2nd variant calling step (Platypus) and merging (GATK)
-*	Annotation (via nenufaar_annot_version.sh)
+*	Annotation (via nenufaar_annot.sh)
 
 ##Warning
 
@@ -36,7 +36,7 @@ Only runs on an HPC environment - is currently configured to run on SLURM
 
 
 
-It is a shell script named nenufaar_version.sh which can analyse several samples successively. The structure of the input folder should look like this:
+It is a shell script named nenufaar.sh which can analyse several samples successively. The structure of the input folder should look like this:
 
 
 	<my run folder>
@@ -80,21 +80,23 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 ##Options
 
 
-*	-h,  --help    Shows this help text
+*	-h,  --help	Shows this help text
 
-*	-dcov, --downsample_to_coverage   GATK option default 1000 - selects the variant caller, HaplotypeCaller if dcov <= 1000, or UnifiedGenotyper
+*	-dcov, --downsample_to_coverage	GATK option default 1000 - selects the variant caller, HaplotypeCaller if dcov <= 1000, or UnifiedGenotyper - DEPRECATED IN THIS VERSION
 
-*	-a, --annotator   Name of annotator: cava (output to textfile), annovar (output to both text and vcf file), vep and snpeff (both output to VCF), default no annotation
+*	-a, --annotator	Name of annotator: cava (output to textfile), annovar (output to both text and vcf file), vep and snpeff (both output to VCF), default no annotation
 
-*	-g, --genome  Version of genome (assembly), either hg19 or hg38, default hg19
+*	-f, --filter	Combined with annovar only, filters out variants with MAF > 1% in ExAC, ESP or 1KG, true/false, default false. Warning: does not produce the annotated VCF, only tab delimited file.
 
-*	-c, --caller  Chooses which variant caller to use: ug: UnifiedGenotyper or hc, HaplotypeCaller default hc
+*	-g, --genome	Version of genome (assembly), either hg19 or hg38, default hg19
 
-*	-np, --noplatypus Disables Platypus variant calling - Default behaviour is GATK variant calling, then Platypus and VCF merging using GATK CombineVariants
+*	-c, --caller	Chooses which variant caller to use: ug: UnifiedGenotyper or hc, HaplotypeCaller default hc
 
-*	-hsm, --hsmetrics Boolean true,false: Asks for Picard HsMetrics calculation: necessitates a Picard.intervals.list (target picard file) file at the root of the run folder, default false - can also take a baits interval file named Picard.baits.intervals.list
+*	-up, --use_platypus	Platypus variant calling - Default behaviour is GATK variant calling, then Platypus and VCF merging using GATK CombineVariants, true/false, default true
 
-*	-p, --protocol	Protocol used to select sequences: capture/amplicon, default capture (mark duplicates)
+*	-hsm, --hsmetrics	Boolean true,false: Asks for Picard CollectHsMetrics calculation: necessitates a Picard.intervals.list (target picard file) file at the root of the run folder, default false - can also take a baits interval file named Picard.baits.intervals.list
+
+*	-p, --protocol	Protocol used to select sequences: capture/amplicon/wgs, default capture 
 
 *	-b, --bam_only	Only generates BAM files
 
@@ -104,21 +106,38 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 *	-o,  --output_path	Sets the absolute path to output directory (must be created before script execution)
 
-*	-r,  --reference     Path to genome fasta reference file
+*	-r,  --reference	Path to genome fasta reference file
 
-*	-snp, --snp            Sets the absolute path to vcf file for dbSNP
+*	-snp, --snp	Sets the absolute path to vcf file for dbSNP
 
-*	-indel1, --indel1      Sets the absolute path to vcf file for indels reference (1000G_phase1.indels sor Mills_and_1000G_gold_standard)
+*	-indel1, --indel1	Sets the absolute path to vcf file for indels reference (1000G_phase1.indels sor Mills_and_1000G_gold_standard)
 
-*	-indel2, --indel2      Set sthe absolute path to vcf file for indels reference (1000G_phase1.indels or Mills_and_1000G_gold_standard)
+*	-indel2, --indel2	Set sthe absolute path to vcf file for indels reference (1000G_phase1.indels or Mills_and_1000G_gold_standard)
 
-*	-d, --duplicates: deprecated
+*	-l, --gene_list	Path to a txt file with a #NAME and a list of genes to be marked in a annovar file
 
+*	-cu, --clean_up	Boolean true, false: set to false to keep intermediate files (for dev purpose)
+
+*	-log,  --log-file	Path to log file
+
+##Tests
+
+To test a new version, please ensure that the different workflow still run without errors. Current tests involve:
+
+*	-p wgs		// test whole genome workflow (no dupmark, no GATK BR&PR, no GATK DoC&QMI, caller GATK HC & Platypus)
+
+*	-p amplicon	// test amplicon workflow (no dupmark, GATK RTC&IR , caller GATK UG & Platypus)
+
+*	-p capture	// test capture workflow (dupmark, GATK BR&PR , caller GATK HC & Platypus)
+
+*	if the annotation process has been modified, test annotation
+
+*	-c ug (optional)	// test GATK UG caller in capture workflow
 
 
 ##Workflow
 
-![Nenufaar workflow](img/nenufaar_2.3.2.png)
+![Nenufaar workflow](img/nenufaar_2.4.png)
 
 
 ##Operation
@@ -144,9 +163,9 @@ Platypus is then used as a second variant caller, then VCFs are merged
 
 A second option -a will make the script use either CAVA or ANNOVAR as annotator (default NULL)
 
--p or --protocol option will ask for marking duplicates via sambamba (capture) or not (amplicons)
+-p or --protocol option will ask for marking duplicates via sambamba (capture) or not (amplicons, wgs)
 
-All configuration variables are now stored in a separate nenufaar.conf file
+All configuration variables are stored in a separate nenufaar.conf file
 
 
 ##Detailed steps
@@ -165,19 +184,20 @@ Depending on -p, the script will run:
 
 *	EITHER Sambamba if -p=capture: markdup & index
 
-*	OR only Sambamba if -p=amplicon: index
+*	OR only Sambamba if -p=amplicon/wgs: index
 
 *	if caller is unified genotyper (-c=ug), GATK : RealignerTargetCreator - creation of an interval file that will contain a list of suspect regions with regard to indels. Subject to downsampling (default 1000 modified with -dcov). Intervals are inside the intervals given as input for the run (typically the captured regions). This means that RealignerTargetCreator only looks at regions of interest.
 
-*	if caller is unified genotyper (-c=ug), GATK : IndelRealigner - Now uses Queue the produced special suspect indels interval file by the RealignerTargetCreator is then used as input at this step, together with the BAM file. With this, the IndelRealigner tool examines and realigns the supsect regions around the indels and produces a realigned BAM file
+*	if caller is unified genotyper (-c=ug), GATK : IndelRealigner - Uses Queue the produced special suspect indels interval file by the RealignerTargetCreator is then used as input at this step, together with the BAM file. With this, the IndelRealigner tool examines and realigns the supsect regions around the indels and produces a realigned BAM file
 
-*	GATK : BaseRecalibrator & PrintReads -  - Now uses Queue - another two step analysis which produces a per base calibration table given a list of known variants (here dbSNP) (BaseRecalibrator); this table together with the BAM is used by PrintReads in --BQSR mode (Input covariates table file for on-the-fly base quality score recalibration) to produce a sorted clean BAM file.
+*	GATK : BaseRecalibrator & PrintReads if -p=amplicon/capture - Uses Queue - another two step analysis which produces a per base calibration table given a list of known variants (here dbSNP) (BaseRecalibrator); this table together with the BAM is used by PrintReads in --BQSR mode (Input covariates table file for on-the-fly base quality score recalibration) to produce a sorted clean BAM file.
 
 *	Sambamba : Re-Index - the last BAM file is indexed (production of .bai file) for further analyses
 
-*	GATK : DepthOfCoverage - Now uses Queue - generates several files concerning DoC (currently in r table format). Of interest the sample_interval_summary file which contains a list of the intervals together with the mean coverage for each. Can be used to look for large rearrangements
+*	GATK : DepthOfCoverage  if -p=amplicon/capture - Uses Queue - generates several files concerning DoC (currently in r table format). Of interest the sample_interval_summary file which contains a list of the intervals together with the mean coverage for each. Can be used to look for large rearrangements
 
-*	GATK : DiagnoseTargets  - Now uses Queue & QualifyMissingIntervals to get info on poorly covered regions
+*	GATK : DiagnoseTargets & QualifyMissingIntervals if -p=amplicon/capture - Uses Queue to get info on poorly covered regions
+
 Depending on -hsm, the script will run:
 
 *	Picard CollectHSMetrics or will go to the next step. **if -b, the script stops here.**
@@ -208,9 +228,6 @@ Depending on -a (default, no annotation), the vcf is annotated with:
 
 *	Annotation step is performed via IURC_VCF_ANNOT_version.sh
 
-##Change log
-
-* Added a step where Platypus MNPs are splitted back into multiple SNPs (platypus script), before merging with GATK
 
 ##Docs
 
