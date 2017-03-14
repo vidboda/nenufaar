@@ -20,3 +20,4 @@ output/*
 nenufaar.conf
 mnenufaar.conf
 nenufaar_annot.conf
+test_log/*
