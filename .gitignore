@@ -19,5 +19,5 @@ output/*
 nenufaar.conf
 mnenufaar.conf
 nenufaar_annot.conf
-test_log/*
+test_logs/*
 divers/*
