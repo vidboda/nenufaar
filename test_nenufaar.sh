@@ -48,7 +48,7 @@ if [ "${STATUS}" -eq 0 ];then
 else
 	echo "Test capture NOT OK - check ${VERSION}.capture.log" >> test_logs/${VERSION}/SUMMARY.log
 fi
-sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p amplicon -log test_logs/${VERSION}/${VERSION}.amplicon.log
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p amplicon -c ug -log test_logs/${VERSION}/${VERSION}.amplicon.log
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test amplicon OK" >> test_logs/${VERSION}/SUMMARY.log
