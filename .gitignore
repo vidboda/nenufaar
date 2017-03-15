@@ -9,7 +9,6 @@ log.txt
 nohup.out
 old
 .queue
-
 ._*
 refData/*
 software/*
