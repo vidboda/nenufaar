@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.4
+VERSION=2.4.1
 
 USAGE="
 Program: nenufaar
@@ -504,24 +504,35 @@ do
 			mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
 			chmod 777 ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp
 			${SRUN_24_COMMAND} ${FASTQC} --threads ${NB_THREAD} -d ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC/tmp ${SAMPLES_FILE_LIST[@]} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_FASTQC
-
+			
 			echo "#############################################################################################"
-			echo "BWA Alignment : MEM - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R "@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
-			echo "#############################################################################################"
-
-			${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R "@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
-
-			ckRes $? "BWA Alignment ";
-			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
-			BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
-
-			echo "#############################################################################################"
-			echo "SAMTOOLS Sort : Sort uncompressed Bam - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}"
+			echo "BWA Alignment : MEM  & SAMTOOLS Sort - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			echo "COMMAND: ${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R \"@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA\"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
 			echo "#############################################################################################"
 
-			${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}
+			${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R "@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} | ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
+			
+			ckRes $? "BWA Alignment & Samtools sort ";
+			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam"
+			BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
+
+			#echo "#############################################################################################"
+			#echo "BWA Alignment : MEM - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			#echo "COMMAND: ${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R \"@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA\"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
+			#echo "#############################################################################################"
+			#
+			#${SRUN_24_COMMAND} ${BWA} mem -M -t ${NB_THREAD} -R "@RG\tID:${CURRENT_SAMPLE_BASEDIR_NAME}\tSM:${CURRENT_SAMPLE_BASEDIR_NAME}\tPL:ILLUMINA"  ${REF_PATH} ${SAMPLES_FILE_LIST[@]} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
+			#
+			#ckRes $? "BWA Alignment ";
+			#ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam"
+			#BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
+			#
+			#echo "#############################################################################################"
+			#echo "SAMTOOLS Sort : Sort uncompressed Bam - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			#echo "COMMAND: ${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}"
+			#echo "#############################################################################################"
+			#
+			#${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}
 
 			ckRes $? "samtools sort ";
 			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam"
