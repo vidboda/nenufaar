@@ -34,14 +34,14 @@ shift
 done
 mkdir test_logs/${VERSION}/
 touch test_logs/${VERSION}/SUMMARY.log
-sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p wgs -log test_logs/${VERSION}/${VERSION}.wgs.log
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p wgs -log test_logs/${VERSION}/${VERSION}.wgs.log -cu false
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test WGS OK" > test_logs/${VERSION}/SUMMARY.log
 else
 	echo "Test WGS NOT OK - check ${VERSION}.wgs.log" > test_logs/${VERSION}/SUMMARY.log
 fi
-sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p capture -log test_logs/${VERSION}/${VERSION}.capture.log
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p capture -log test_logs/${VERSION}/${VERSION}.capture.log -cu false
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test capture OK" >> test_logs/${VERSION}/SUMMARY.log
