@@ -825,7 +825,7 @@ do
 				#####
 				echo "#############################################################################################"
 				echo "PLATYPUS : VariantCalling second round - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PYTHON} ${PLATYPUS} callVariants --bamFiles=${BAM} --refFile=${REF_PATH} --nCPU=${NB_THREAD} ${PLATYPUS_BUFFER} --regions=${PLATYPUS_INTERVALS} --output=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${PYTHON} ${PLATYPUS} callVariants --bamFiles=${BAM} --refFile=${REF_PATH} --nCPU=${NB_THREAD} --verbosity 1 ${PLATYPUS_BUFFER} --regions=${PLATYPUS_INTERVALS} --output=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf"
 				echo "#############################################################################################"
 
 				export C_INCLUDE_PATH=${HTSLIB}/include:${C_INCLUDE_PATH}
@@ -837,7 +837,7 @@ do
 				echo "LD_LIBRARY_PATH:  ${LD_LIBRARY_PATH}"
 				echo "#############################################################################################"
 
-				${SRUN_24_COMMAND} ${PYTHON} ${PLATYPUS} callVariants --minFlank=0 --bamFiles=${BAM} --refFile=${REF_PATH} --nCPU=${NB_THREAD} ${PLATYPUS_BUFFER} --regions=${PLATYPUS_INTERVALS} --output=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf
+				${SRUN_24_COMMAND} ${PYTHON} ${PLATYPUS} callVariants --minFlank=0 --bamFiles=${BAM} --refFile=${REF_PATH} --nCPU=${NB_THREAD} --verbosity 1 ${PLATYPUS_BUFFER} --regions=${PLATYPUS_INTERVALS} --output=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf
 
 				ckRes $? "PLATYPUS : VariantCalling second round  "
 				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.platypus.vcf"
