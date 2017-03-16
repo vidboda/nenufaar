@@ -10,8 +10,8 @@
 ###########################################################################
 
 
-VERSION=2.4.1
-
+VERSION=2.4.2
+TESTED=yes
 USAGE="
 Program: nenufaar
 Version: ${VERSION}
@@ -439,12 +439,20 @@ if [ "${USE_PLATYPUS}" == 'true' ];then
 	ckFileSz "${PLATYPUS_INTERVALS}"
 	echo "PLATYPUS_INTERVALS : ${PLATYPUS_INTERVALS}"
 fi
-if [ "${#QUALIMAP}" -ne 0 ];then	
-	awk 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
-	INTERVALS_BED=${INPUT_PATH}Intervals.bed
-	ckFileSz "${INTERVALS_BED}"
-	echo "INTERVALS_BED : ${INTERVALS_BED}"
+#if [ "${#QUALIMAP}" -ne 0 ];then
+#creates BED file from Intervals if does not exists
+if [[ ! -s ${INPUT_PATH}Intervals.bed ]];then
+	${AWK} 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
 fi
+
+${SORT} -k1,1 -k2,2n -k3,3n ${INPUT_PATH}Intervals.bed > ${INPUT_PATH}Intervals.sorted.bed
+rm ${INPUT_PATH}Intervals.bed
+mv ${INPUT_PATH}Intervals.sorted.bed ${INPUT_PATH}Intervals.bed
+
+INTERVALS_BED=${INPUT_PATH}Intervals.bed
+ckFileSz "${INTERVALS_BED}"
+echo "INTERVALS_BED : ${INTERVALS_BED}"
+
 
 if [ "${HSMETRICS}" == 'true' ]; then
 	PICARD_INTERVALS_FILE=${INPUT_PATH}Picard.intervals.list
@@ -534,9 +542,9 @@ do
 			#
 			#${SRUN_24_COMMAND} ${SAMTOOLS} sort -@ ${NB_THREAD} -l 1 -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam ${BAM}
 
-			ckRes $? "samtools sort ";
-			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam"
-			BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
+			#ckRes $? "samtools sort ";
+			#ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam"
+			#BAM=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
 
 			#####markdup si capture- sinon index bam
 			if [ "${PROTOCOL}" == 'capture' ]; then
@@ -597,8 +605,16 @@ do
 
 			${SRUN_24_COMMAND} ${SAMBAMBA} flagstat -t${NB_THREAD} ${BAM} > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_stats.txt
 			
-			if [ "${PROTOCOL}" != 'wgs' ];then
+			echo "#############################################################################################"
+			echo "BEDTOOLS & AWK Calculate poorly covered regions - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BEDTOOLS} genomecov -ibam ${BAM} -bga | ${AWK} -v low_coverage=\"${BEDTOOLS_LOW_COVERAGE}\" '\$4<low_coverage' | ${BEDTOOLS} intersect -a ${INTERVALS_BED} -b - | ${SORT} -k1,1 -k2,2n -k3,3n | ${BEDTOOLS} merge -c 4 -o distinct -i - | ${AWK} -v small_intervall=\"${BEDTOOLS_SMALL_INTERVALS}\"  'BEGIN {OFS='\t'} {a=(\$3-\$2+1);if(a<small_intervall) {b=\"SMALL_INTERVAL\"} else {b=\"OTHER\"};print \$0, a, b}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_poor_coverage.txt"
+			echo "#############################################################################################"
 
+			${SRUN_SIMPLE_COMMAND} ${BEDTOOLS} genomecov -ibam ${BAM} -bga | ${AWK} -v low_coverage="${BEDTOOLS_LOW_COVERAGE}" '$4<low_coverage' | ${BEDTOOLS} intersect -a ${INTERVALS_BED} -b - | ${SORT} -k1,1 -k2,2n -k3,3n | ${BEDTOOLS} merge -c 4 -o distinct -i - | ${AWK} -v small_intervall="${BEDTOOLS_SMALL_INTERVALS}" 'BEGIN {OFS="\t"} {a=($3-$2+1);if(a<small_intervall) {b="SMALL_INTERVAL"} else {b="OTHER"};print $0, a, b}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_poor_coverage.txt
+			#takes ~2 minutes on 1,2G bam and 10 minutes on 7,7G bam
+			
+			
+			if [ "${PROTOCOL}" != 'wgs' ];then
 				if [ "${CALLER}" == 'ug' ]; then
 					echo "#############################################################################################"
 					echo "GATK : RealignerTargetCreator - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
@@ -881,7 +897,7 @@ do
 				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.*
 			fi
 			if [ "${VC_ONLY}" == 'false' ];then
-				rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam			
+				#rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.uncompressed.bam
 				
 				if [ "${PROTOCOL}" != 'wgs' ];then
 					rm ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.bam
@@ -940,4 +956,4 @@ printf '%dh:%dm:%ds\n' "$((${DIFF}/3600))" "$((${DIFF}%3600/60))" "$((${DIFF}%60
 echo "#############################################################################################"
 echo "#############################################################################################"
 
-exit 
+exit 0
