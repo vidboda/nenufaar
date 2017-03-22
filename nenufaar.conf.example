@@ -1,0 +1,116 @@
+#########	Set Generic interpreters  			#########
+
+JAVA7=path/to/java7/bin/java
+export JAVA_HOME=/usr/bin/
+JAVA=path/to/java8/bin/java
+export PATH=${JAVA_HOME}:${PATH}
+echo "#############################################################################################"
+echo "PATH usable by nenufaar:  ${PATH}"
+echo "#############################################################################################"
+####BEGIN SLURMONLY
+#muse /cm devient /trinity
+#module load cv-standard gcc
+#LD_LIBRARY_PATH => path to lib_drmaa.so
+export LD_LIBRARY_PATH=/usr/local/lib/:${LD_LIBRARY_PATH}
+echo "#############################################################################################"
+echo "LD_LIBRARY_PATH to use lib_drmaa for queue:  ${LD_LIBRARY_PATH}"
+echo "#############################################################################################"
+####END SLURMONLY
+PYTHON=path/to/python
+PERL=path/to/perl
+BASH=path/to/bash
+AWK=path/to/awk
+SORT=path/to/sort
+
+#########	Set software versions 			#########
+#replace with your versions number
+#version numbers can be used in path below
+#e.g.
+#BWA_VERSION=0.7.15
+#BWA=softs/bwa/${BWA-VERSION}/bin/bwa
+BWA_VERSION=0.7.15
+FASTQC_VERSION=0.11.5
+SAMTOOLS_VERSION=1.3.1
+PICARD_VERSION=2.6.0
+GATK_VERSION=3.6.0
+GATK_OLD_VERSION=3.5.0
+PLATYPUS_VERSION=0.8.1
+QUEUE_VERSION=3.6
+QUEUE_OLD_VERSION=3.5
+SAMBAMBA_VERSION=0.6.3
+BEDTOOLS_VERSION=2.26.0
+IURC_VCF_AB_VERSION=1.0
+
+#########	Set paths to sofware 			#########
+
+BWA=path/to/bwa
+FASTQC=path/to/fastqc
+SAMTOOLS=path/to/samtools
+PICARD=path/to/picard.jar
+GATK=path/to/GenomeAnalysisTK.jar
+#GATK old used for indel realigner (e.g. 3.5)
+GATK_OLD=path/to/GenomeAnalysisTK_old_version.jar
+PLATYPUS=path/to/Platypus.py
+ANNOTATION_SCRIPT=nenufaar_annot.sh
+VCF_POLYX=path/to/vcfpolyx.jar
+QUEUE=path/to/Queue.jar
+#QUEUE old used for indel realigner (e.g. 3.5)
+QUEUE_OLD=path/to/Queue_old_version.jar
+SAMBAMBA=path/to/sambamba_v${SAMBAMBA_VERSION}
+HTSLIB=path/to/
+BEDTOOLS=path/to/bin/bedtools
+IURC_VCF_AB=utilities/vcf_allele_balance/vcf_allele_balance_${IURC_VCF_AB_VERSION}.pl
+QUALIMAP=path/to/qualimap
+
+#########	Set paths to data 			#########
+
+OUTPUT_PATH=path/to/output/
+SCALA_PATH=queueScripts/
+#default genome is hg19
+#however you can specify -g hg38 when launching nenufaar
+#but in that case you must have your hg38 files in nenufaar/refData/genome/hg38/
+REF_PATH=path/to/hg19.fa
+SNP_PATH=path/to/CORRECT_dbsnp_138.hg19.vcf
+INDEL1=path/to/1000G_phase1.indels.hg19.sites.vcf
+INDEL2=path/to//Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+
+#########	Set script options defaults 		#########
+
+#you may change default genome here, but then you must change data paths above
+GENOME=hg19
+WGS=false
+DCOV=1000
+ANNOTATOR=0
+PROTOCOL=capture
+HSMETRICS=false
+CALLER=hc
+IP=20
+STAND_EMIT_CONF=10
+STAND_CALL_CONF=30
+DP_THRESHOLD=20
+FILTER=false
+USE_PLATYPUS=true
+BAM_ONLY=false
+VC_ONLY=false
+CLEAN_UP=true
+BEDTOOLS_LOW_COVERAGE=20
+BEDTOOLS_SMALL_INTERVALS=20
+
+#########	Set computer environnment options 	#########
+
+NB_THREAD=32
+NB_NODES=1
+MAX_RAM=48
+MAX_RAM_GATK_SINGLE=4
+PICARD_RAM=4
+PARTITION=monster
+
+#########	Set cluster commands		 	#########
+
+SRUN_SIMPLE_COMMAND="srun --job-name=${RUN_BASEDIR_NAME}_${ID} -N${NB_NODES} -n1 -c1 --partition=${PARTITION} --mem-per-cpu=12288"
+SRUN_24_COMMAND="srun --job-name=${RUN_BASEDIR_NAME}_${ID} -N${NB_NODES} -n1 -c${NB_THREAD} --partition=${PARTITION}"
+QUEUE_RUNNER="-jobRunner Drmaa"
+
+##########	Others					#########
+
+ID=$RANDOM
