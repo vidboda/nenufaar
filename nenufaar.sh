@@ -257,7 +257,7 @@ fi
 #########	Test mandatory arguments setting  			#########
 
 if [ -z "${INDEL1}" ] || [ -z "${INDEL2}" ] || [ -z "${INPUT_PATH}" ] || [ -z "${OUTPUT_PATH}" ] || [ -z "${SNP_PATH}" ] || [ -z "${REF_PATH}" ]; then
-	echo 'Error Message : Mandatory argument missing -> see help (-h)'
+	echo 'Error Message : Mandatory path missing -> see help (-h)'
 	exit 1
 fi
 
@@ -283,6 +283,17 @@ fi
 if [ "${#LIST}" -ne 0 ]; then
 	LIST="-l ${LIST}"
 fi
+
+if [ -z "${JAVA7}" ] || [ -z "${JAVA}" ] || [ -z "${LD_LIBRARY_PATH}" ] || [ -z "${PYTHON}" ] || [ -z "${PERL}" ] || [ -z "${BASH}" ]|| [ -z "${PERL}" ] || [ -z "${AWK}" ] || [ -z "${SORT}" ] || [ -z "${BWA}" ] || [ -z "${FASTQC}" ] || [ -z "${SAMTOOLS}" ] || [ -z "${PICARD}" ] || [ -z "${GATK}" ] || [ -z "${PLATYPUS}" ] || [ -z "${ANNOTATION_SCRIPT}" ] || [ -z "${VCF_POLYX}" ] || [ -z "${QUEUE}" ] || [ -z "${SAMBAMBA}" ] || [ -z "${HTSLIB}" ] || [ -z "${BEDTOOLS}" ] || [ -z "${IURC_VCF_AB}" ]; then
+	echo 'Error Message : Mandatory software missing -> see help (-h) or conf file'
+	exit 1
+fi
+
+if [ -z "${GENOME}" ] || [ -z "${WGS}" ] || [ -z "${DCOV}" ] || [ -z "${ANNOTATOR}" ] || [ -z "${PROTOCOL}" ] || [ -z "${CALLER}" ] || [ -z "${IP}" ] || [ -z "${STAND_EMIT_CONF}" ] || [ -z "${STAND_CALL_CONF}" ] || [ -z "${DP_THRESHOLD}" ] || [ -z "${BAM_ONLY}" ] || [ -z "${VC_ONLY}" ] || [ -z "${BEDTOOLS_LOW_COVERAGE}" ] || [ -z "${BEDTOOLS_SMALL_INTERVALS}" ] || [ -z "${NB_THREAD}" ] || [ -z "${NB_NODES}" ] || [ -z "${MAX_RAM}" ] || [ -z "${MAX_RAM_GATK_SINGLE}" ] || [ -z "${PICARD_RAM}" ]; then
+	echo 'Error Message : Mandatory option missing -> see help (-h) or conf file'
+	exit 1
+fi
+
 
 ### got from http://stackoverflow.com/questions/8063228/how-do-i-check-if-a-variable-exists-in-a-list-in-bash
 
