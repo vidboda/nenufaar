@@ -280,7 +280,7 @@ if [ "${LIST}" != '' ] && [ ! -e "${LIST}" ]; then
 	echo 'GENE LIST FILE ${LIST} DOES NOT EXIST -> see help (-h)' && exit 1;
 fi
 
-if [ "${#LIST}" -ne 0 ]; then
+if [ "${LIST}" != '' ]; then
 	LIST="-l ${LIST}"
 fi
 
