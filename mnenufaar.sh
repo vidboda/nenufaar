@@ -224,8 +224,8 @@ if [ "${GENOME}" != 0 ]; then
 	validate_genome "${GENOME}" && echo "VALID GENOME OPTION = ${GENOME}" || { echo "INVALID GENOME OPTION = ${GENOME} -> see help (-h)" && exit 1; }
 fi
 
-if [ "${#LIST}" -ne 0 ]; then
-	${LIST} = "-l ${LIST}"
+if [ "${LIST}" != '' ]; then
+	LIST = "-l ${LIST}"
 fi
 
 DATE1=$(date +"%s")
