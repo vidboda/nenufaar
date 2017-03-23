@@ -41,7 +41,7 @@ if [ "${STATUS}" -eq 0 ];then
 else
 	echo "Test WGS NOT OK on ${HOSTNAME} - check ${VERSION}.wgs.log" > test_logs/${VERSION}/SUMMARY.log
 fi
-sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p capture -log test_logs/${VERSION}/${VERSION}.capture.log -cu false
+sh nenufaar.sh -i input/MiniFastqTest/ -hsm true -up false -p capture -log test_logs/${VERSION}/${VERSION}.capture.log -cu false -a annovar -l gene_lists/ns.txt
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test capture OK on ${HOSTNAME}" >> test_logs/${VERSION}/SUMMARY.log
