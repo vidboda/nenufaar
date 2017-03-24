@@ -9,7 +9,7 @@
 ###########################################################################
 
 
-VERSION=1.5.2
+VERSION=1.6
 USAGE="
 Program: nenufaar_annot
 Version: ${VERSION}
@@ -131,6 +131,10 @@ case "${KEY}" in
 	CLEAN_UP="$2"
 	shift
 	;;
+	-log|--log-file)
+	LOG_FILE="$2"
+	shift
+	;;
 	-cftr|--cftr)
 	CFTR="$2"
 	shift
@@ -188,8 +192,6 @@ if [ "${GENOME}" == 'hg19' ];then
 	SPIDEX=",spidex"
 	SPIDEX_OP=",f"
 	SPIDEX_COMMA=","
-#fi
-#if [ "${GENOME}" == 'hg19' ];then
 	POP_FREQ_MAX=",popfreq_max_20150413"
 	POP_FREQ_MAX_OP=",f"
 	POP_FREQ_MAX_COMMA=","
@@ -197,6 +199,12 @@ fi
 if [ "${MULTISAMPLE}" == 'true' ];then
 	SAMPLE_ARG='-allsample -withfreq'
 fi
+
+if [ ${#LOG_FILE} -ne 0 ];then
+	touch ${LOG_FILE}
+	exec &>${LOG_FILE}
+fi
+
 echo "nenufaar annotation module ${VERSION}"
 echo "ANNOTATOR : ${ANNOTATOR}"
 echo "GENOME : ${GENOME}"
@@ -302,75 +310,97 @@ do
 				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${PERL} ${ANNOVAR}convert2annovar.pl -format vcf4 ${SAMPLE_ARG} -includeinfo ${INPUT_PATH}${SAMPLE_FILE} -outfile ${INPUT_PATH}${SAMPLE_FILE}.avinput"
 				echo "#############################################################################################"
 
-				${SRUN_SIMPLE_COMMAND} ${PERL} ${ANNOVAR}convert2annovar.pl -format vcf4 ${SAMPLE_ARG} -includeinfo ${INPUT_PATH}${SAMPLE_FILE} -outfile ${INPUT_PATH}${SAMPLE_FILE}.avinput
+				${SRUN_SIMPLE_COMMAND} ${PERL} ${ANNOVAR}convert2annovar.pl -format vcf4 ${SAMPLE_ARG} -includeinfo ${INPUT_PATH}${SAMPLE_FILE} -outfile ${OUTPUT_PATH}${SAMPLE_FILE}.avinput
 
 				ckRes $? "ANNOVAR : Prepare avinput"
-				ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.avinput
-
+				ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.avinput
+				
 				echo "#############################################################################################"
-				echo "ANNOVAR : filter 1000G MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype 1000g2015aug_all -maf 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}"
-				echo "#############################################################################################"
-
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype 1000g2015aug_all -maf 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}
-				ckRes $? "ANNOVAR : filter 1000G MAF > 0.01"
-				ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered
-
-				echo "#############################################################################################"
-				echo "ANNOVAR : filter kaviar MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype kaviar_20150923 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered ${ANNOVAR_HUMAN_DB}"
+				echo "ANNOVAR : filter gnomeAD exome MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype gnomad_exome -score_threshold 0.01 -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE} ${OUTPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}"
 				echo "#############################################################################################"
 
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype kaviar_20150923 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered ${ANNOVAR_HUMAN_DB}
-				ckRes $? "ANNOVAR : filter ExAC MAF > 0.01"
-				ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered
-
+				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype gnomad_exome -score_threshold 0.01 -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE} ${OUTPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}
+				ckRes $? "ANNOVAR : filter gnomeAD exome MAF > 0.01"
+				ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_exome_filtered
+				
 				echo "#############################################################################################"
-				echo "ANNOVAR : filter ExAC MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype exac03 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered ${ANNOVAR_HUMAN_DB}"
-				echo "#############################################################################################"
-
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype exac03 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered ${ANNOVAR_HUMAN_DB}
-				ckRes $? "ANNOVAR : filter ExAC MAF > 0.01"
-				ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered
-
-				echo "#############################################################################################"
-				echo "ANNOVAR : filter ESP6500 MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype esp6500siv2_all -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered ${ANNOVAR_HUMAN_DB}"
+				echo "ANNOVAR : filter gnomeAD genome MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype gnomad_genome -score_threshold 0.01 -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE} ${OUTPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}"
 				echo "#############################################################################################"
 
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype esp6500siv2_all -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered ${ANNOVAR_HUMAN_DB}
-				ckRes $? "ANNOVAR : filter ESP6500 MAF > 0.01"
-				ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered
+				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype gnomad_genome -score_threshold 0.01 -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE} ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_exome_filtered ${ANNOVAR_HUMAN_DB}
+				ckRes $? "ANNOVAR : filter gnomeAD genome MAF > 0.01"
+				ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_genome_filtered
+
+				#echo "#############################################################################################"
+				#echo "ANNOVAR : filter 1000G MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				#echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype 1000g2015aug_all -maf 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}"
+				#echo "#############################################################################################"
+				#
+				#${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype 1000g2015aug_all -maf 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.avinput ${ANNOVAR_HUMAN_DB}
+				#ckRes $? "ANNOVAR : filter 1000G MAF > 0.01"
+				#ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered
+				#
+				#echo "#############################################################################################"
+				#echo "ANNOVAR : filter kaviar MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				#echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype kaviar_20150923 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered ${ANNOVAR_HUMAN_DB}"
+				#echo "#############################################################################################"
+				#
+				#${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype kaviar_20150923 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered ${ANNOVAR_HUMAN_DB}
+				#ckRes $? "ANNOVAR : filter ExAC MAF > 0.01"
+				#ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered
+				#
+				#echo "#############################################################################################"
+				#echo "ANNOVAR : filter ExAC MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				#echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype exac03 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered ${ANNOVAR_HUMAN_DB}"
+				#echo "#############################################################################################"
+				#
+				#${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype exac03 -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered ${ANNOVAR_HUMAN_DB}
+				#ckRes $? "ANNOVAR : filter ExAC MAF > 0.01"
+				#ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered
+				#
+				#echo "#############################################################################################"
+				#echo "ANNOVAR : filter ESP6500 MAF > 0.01 - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+				#echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype esp6500siv2_all -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered ${ANNOVAR_HUMAN_DB}"
+				#echo "#############################################################################################"
+				#
+				#${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}annotate_variation.pl -thread ${NB_THREAD} -filter -dbtype esp6500siv2_all -score_threshold 0.01 -buildver ${GENOME} -out ${INPUT_PATH}${SAMPLE_FILE} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered ${ANNOVAR_HUMAN_DB}
+				#ckRes $? "ANNOVAR : filter ESP6500 MAF > 0.01"
+				#ckFileSz ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered
 
 				echo "#############################################################################################"
 				echo "ANNOVAR : Functional Annotation of Variants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -arg '-splicing 100',,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA} -otherinfo"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_genome_filtered ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -arg '-splicing 100',,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA} -otherinfo"
 				echo "#############################################################################################"
 
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -arg '-splicing 100',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA} -otherinfo
+				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_genome_filtered ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -arg '-splicing 100',,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA} -otherinfo
 
 				ckRes $? "ANNOVAR : Functional Annotation of Variants"
 				ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.annovar.${GENOME}_multianno.txt
 				TXT_FILE=${OUTPUT_PATH}${SAMPLE_FILE}.annovar.${GENOME}_multianno.txt
-				rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_filtered
-				rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_filtered
-				rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered
-				rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered
-				rm ${INPUT_PATH}${SAMPLE_FILE}.avinput
-				rm ${INPUT_PATH}${SAMPLE_FILE}.log
+				rm ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_exome_filtered
+				rm ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_genome_filtered
+				#rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_filtered
+				#rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered
+				rm ${OUTPUT_PATH}${SAMPLE_FILE}.avinput
+				rm ${OUTPUT_PATH}${SAMPLE_FILE}.log
 				mkdir ${INPUT_PATH}annovar_dropped
-				mv ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_dropped ${INPUT_PATH}annovar_dropped
-				mv ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_dropped ${INPUT_PATH}annovar_dropped
-				mv ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_dropped ${INPUT_PATH}annovar_dropped
-				mv ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_dropped ${INPUT_PATH}annovar_dropped
+				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_dropped ${OUTPUT_PATH}annovar_dropped
+				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_dropped ${OUTPUT_PATH}annovar_dropped
+				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_dropped ${OUTPUT_PATH}annovar_dropped
+				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_dropped ${OUTPUT_PATH}annovar_dropped
+				mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_exome_dropped ${OUTPUT_PATH}annovar_dropped
+				mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_gnomad_genome_dropped ${OUTPUT_PATH}annovar_dropped
 			else
 				echo "#############################################################################################"
 				echo "ANNOVAR : Functional Annotation of Variants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}"
+				#echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}"
 				echo "#############################################################################################"
 
-				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
+				#${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
+				${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver ${GENOME} -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 50',,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
 
 				ckRes $? "ANNOVAR : Functional Annotation of Variants"
 				rm ${OUTPUT_PATH}${SAMPLE_FILE}.annovar.avinput
@@ -392,10 +422,10 @@ do
 
 			echo "#############################################################################################"
 			echo "ANNOVAR : Functional Annotation of Variants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-			echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}"
+			echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}}"
 			echo "#############################################################################################"
 
-			${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20150629,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp30a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
+			${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
 
 			rm ${OUTPUT_PATH}${SAMPLE_FILE}.annovar.avinput
 			ckRes $? "ANNOVAR : Functional Annotation of Variants"
