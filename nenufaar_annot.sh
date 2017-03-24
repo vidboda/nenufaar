@@ -385,7 +385,7 @@ do
 				#rm ${INPUT_PATH}${SAMPLE_FILE}.${GENOME}_esp6500siv2_all_filtered
 				rm ${OUTPUT_PATH}${SAMPLE_FILE}.avinput
 				rm ${OUTPUT_PATH}${SAMPLE_FILE}.log
-				mkdir ${INPUT_PATH}annovar_dropped
+				mkdir ${OUTPUT_PATH}annovar_dropped
 				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_ALL.sites.2015_08_dropped ${OUTPUT_PATH}annovar_dropped
 				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_kaviar_20150923_dropped ${OUTPUT_PATH}annovar_dropped
 				#mv ${OUTPUT_PATH}${SAMPLE_FILE}.${GENOME}_exac03_dropped ${OUTPUT_PATH}annovar_dropped
