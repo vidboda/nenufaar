@@ -483,7 +483,7 @@ echo "ALL SAMPLES DIR PATH : ${SAMPLES_DIR_PATH_LIST[@]}"
 #used in VC only mode
 SEMAPH=0
 MULTISAMPLE=''
-TOTAL_SAMPLES="${#SAMPLES_DIR_PATH_LIST[@]}"
+TOTAL_SAMPLES=$((${#SAMPLES_DIR_PATH_LIST[@]}+1))
 echo "TOTAL SAMPLES TO ANALYSE : ${TOTAL_SAMPLES}"
 
 ################## FOR TESTING PURPOSE REMOVE WHEN DONE AND CHANGE CONF FILE
@@ -765,7 +765,7 @@ do
 				ckFileSz ${BAM}
 				MULTISAMPLE='-m true'
 				PLATYPUS_BUFFER='--bufferSize=10000'
-				DP_THRESHOLD=${TOTAL_SAMPLES}*10
+				DP_THRESHOLD=$((${TOTAL_SAMPLES}*10))
 			fi
 			if [ "${CALLER}" == 'ug' ]; then
 				echo "#############################################################################################"
