@@ -177,6 +177,14 @@ case "${KEY}" in
 	LIST="$2"
 	shift
 	;;
+	-cu|--clean_up)					#default true
+	CLEAN_UP="$2"
+	shift
+	;;
+	-log|--log-file)
+	LOG_FILE="$2"
+	shift
+	;;
 	*)
 	echo "Error Message : Unknown option ${KEY}" 	# unknown option
 	exit
@@ -186,7 +194,10 @@ shift
 done
 
 mkdir ${OUTPUT_PATH}
-LOG_FILE="${OUTPUT_PATH}mnenufaar_${ID}.log"
+if [ ${#LOG_FILE} -eq 0 ];then
+	LOG_FILE="${OUTPUT_PATH}mnenufaar_${ID}.log"
+fi
+
 
 
 
@@ -224,8 +235,12 @@ if [ "${GENOME}" != 0 ]; then
 	validate_genome "${GENOME}" && echo "VALID GENOME OPTION = ${GENOME}" || { echo "INVALID GENOME OPTION = ${GENOME} -> see help (-h)" && exit 1; }
 fi
 
+if [ "${LIST}" != '' ] && [ ! -e "${LIST}" ]; then
+	echo 'GENE LIST FILE ${LIST} DOES NOT EXIST -> see help (-h)' && exit 1;
+fi
+
 if [ "${LIST}" != '' ]; then
-	LIST = "-l ${LIST}"
+	LIST="-l ${LIST}"
 fi
 
 DATE1=$(date +"%s")
@@ -284,7 +299,7 @@ ckFileSz() {
 ###
 
 
-echo "launching nohup sh nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
+echo "COMMAND: nohup sh nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
 
 nohup ${SHELL} nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b
 
@@ -321,7 +336,7 @@ echo "##########################################################################
 echo "SAMBAMBA : merge - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLES : ${BAMS_FILES[@]}"
 echo "#############################################################################################"
 
-echo "${SRUN_24_COMMAND} ${SAMBAMBA} merge -t ${NB_THREAD} ${MERGED_DIR}MERGED_SAMPLES.bam ${BAMS_FILES[@]}"
+echo "COMMAND: ${SRUN_24_COMMAND} ${SAMBAMBA} merge -t ${NB_THREAD} ${MERGED_DIR}MERGED_SAMPLES.bam ${BAMS_FILES[@]}"
 
 ${SRUN_24_COMMAND} ${SAMBAMBA} merge -t ${NB_THREAD} ${MERGED_DIR}MERGED_SAMPLES.bam ${BAMS_FILES[@]}
 
@@ -344,7 +359,7 @@ rm ${BAIS_FILES[@]}
 ###nenufaar generate single VCF for all samples
 ###
 
-echo "launching nohup sh nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
+echo "COMMAND: nohup sh nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
 
 nohup ${SHELL} nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc
 
