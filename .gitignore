@@ -20,4 +20,5 @@ nenufaar.conf
 mnenufaar.conf
 nenufaar_annot.conf
 tests/test_logs/*
+tests/vcf/
 divers/*
