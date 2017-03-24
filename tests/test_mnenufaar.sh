@@ -32,14 +32,14 @@ case "${KEY}" in
 esac
 shift
 done
-mkdir test_logs/mnenufaar/${VERSION}/
-touch test_logs/mnenufaar/${VERSION}/SUMMARY.log
-sh mnenufaar.sh -i input/MiniFastqTest_m/ -up false -p wgs -g hg19 -log test_logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log -cu false -a annovar -l gene_lists/ns.txt
+mkdir tests/test_logs/mnenufaar/${VERSION}/
+touch tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
+sh mnenufaar.sh -i input/MiniFastqTest_m/ -up false -p wgs -g hg19 -log tests/test_logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log -cu false -a annovar -l gene_lists/ns.txt
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
-	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
+	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
 else
-	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check ${VERSION}.mnenufaar.log" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
+	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check ${VERSION}.mnenufaar.log" > tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
 fi
 
 exit
