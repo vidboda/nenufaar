@@ -2,7 +2,7 @@
 
 
 USAGE="
-sh test_nenufaar.sh -v version_number
+sh tests/test_nenufaar.sh -v version_number - launch from nenufaar folder
 "
 
 if [ "$#" -eq 0 ]; then
