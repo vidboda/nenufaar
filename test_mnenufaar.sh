@@ -39,7 +39,7 @@ STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
 else
-	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check ${VERSION}.wgs.log" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
+	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check ${VERSION}.mnenufaar.log" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
 fi
 
 exit
