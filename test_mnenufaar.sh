@@ -34,7 +34,7 @@ shift
 done
 mkdir test_logs/mnenufaar/${VERSION}/
 touch test_logs/mnenufaar/${VERSION}/SUMMARY.log
-sh mnenufaar.sh -i input/MiniFastqTest_m/ -up false -p wgs -log test_logs/mnenufaar/${VERSION}/${VERSION}.wgs.log -cu false -l gene_lists/ns.txt
+sh mnenufaar.sh -i input/MiniFastqTest_m/ -up false -p wgs -g hg19 -log test_logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log -cu false -a annovar -l gene_lists/ns.txt
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > test_logs/mnenufaar/${VERSION}/SUMMARY.log
