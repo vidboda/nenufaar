@@ -2,7 +2,7 @@
 
 
 USAGE="
-sh tests/test_mnenufaar.sh -v version_number - launch from nenufaar folder
+sh tests/mnenufaar_test.sh -v version_number - launch from nenufaar folder
 "
 
 if [ "$#" -eq 0 ]; then
@@ -32,14 +32,14 @@ case "${KEY}" in
 esac
 shift
 done
-mkdir tests/test_logs/mnenufaar/${VERSION}/
-touch tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
-sh mnenufaar.sh -i input/MiniFastqTest_m/ -up false -p wgs -g hg19 -log tests/test_logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log -cu false -a annovar -l gene_lists/ns.txt
+mkdir tests/logs/mnenufaar/${VERSION}/
+touch tests/logs/mnenufaar/${VERSION}/SUMMARY.log
+sh mnenufaar.sh -i input/tests/MiniFastqTest_m/ -up false -p wgs -g hg19 -log tests/logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log -cu false -a annovar -l gene_lists/ns.txt
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
-	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
+	echo "Test mnenufaar WGS OK on ${HOSTNAME}" > tests/logs/mnenufaar/${VERSION}/SUMMARY.log
 else
-	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check ${VERSION}.mnenufaar.log" > tests/test_logs/mnenufaar/${VERSION}/SUMMARY.log
+	echo "Test mnenufaar WGS NOT OK on ${HOSTNAME} - check: tail -30 tests/logs/mnenufaar/${VERSION}/${VERSION}.mnenufaar.log" > tests/logs/mnenufaar/${VERSION}/SUMMARY.log
 fi
 
 exit
