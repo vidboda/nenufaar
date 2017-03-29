@@ -219,7 +219,7 @@ echo "TABIX_VERSION : ${TABIX_VERSION}"
 echo "IURC_MERGE_VERSION : ${IURC_MERGE_VERSION}"
 echo "ADD_BARCODE_VERSION : ${ADD_BARCODE_VERSION}"
 echo "IURC_MARK_GENES_VERSION : ${IURC_MARK_GENES_VERSION}"
-echo "IURC_ADD_OMIM_VERSION : ${IURC_ADD_OMIM_VERSION}"
+echo "BCFTOOLS : ${BCFTOOLS}"
 echo "ADD_LED_VERSION : ${ADD_LED_VERSION}"
 
 echo "Your analyze ID is : ${ID}"
@@ -292,14 +292,14 @@ do
 	if [ "${ANNOTATOR}" != 0 ]; then
 		if [ "${ANNOTATOR}" == 'annovar' ] || [ "${ANNOTATOR}" == 'merge' ]; then
 			echo "#############################################################################################"
-			echo "BCFTOOLS : per-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BGZIP} ${INPUT_PATH}${SAMPLE_FILE} | ${TABIX} | ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${INPUT_PATH}${SAMPLE_FILE}.norm.vcf"
+			echo "BCFTOOLS : pre-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${INPUT_PATH}${SAMPLE_FILE}.norm.vcf"
 			echo "#############################################################################################"
 			#we pre-process vcf for annovar (split multi-alleles and left normalisation of indels)
 			#http://annovar.openbioinformatics.org/en/latest/articles/VCF/
 			
 			${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
-			ckRes $? "BCFTOOLS : per-processing of VCF "
+			ckRes $? "BCFTOOLS : pre-processing of VCF "
 			ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
 			VCF=${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
 		fi
