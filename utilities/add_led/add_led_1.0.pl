@@ -15,13 +15,13 @@ $Getopt::Std::STANDARD_HELP_VERSION = 1;
 my (%opts, $file, $led_file, $header, $new_file, $tabix);
 getopts('l:t:e:', \%opts);
 
-if ((not exists $opts{'l'}) || ($opts{'l'} !~ /LED_hg\d{2}_\d{2}_\d{2}_\d{4}\.vcf\.gz$/o) || (not exists $opts{'t'}) || ($opts{'t'} !~ /\.txt$/o) || (not exists $opts{'e'}) || ($opts{'e'} !~ /tabix$/o)) {
+if ((not exists $opts{'l'}) || ($opts{'l'} !~ /LED_hg\d{2}_\d{4}_\d{2}_\d{2}\.vcf\.gz$/o) || (not exists $opts{'t'}) || ($opts{'t'} !~ /\.txt$/o) || (not exists $opts{'e'}) || ($opts{'e'} !~ /tabix$/o)) {
 	&HELP_MESSAGE();
 	exit
 }
 
 if ($opts{'t'} =~ /(.+)\.txt$/o) {$file = $1} #get file path and prefix
-if ($opts{'l'} =~ /(.+LED_hg\d{2}_\d{2}_\d{2}_\d{4}\.vcf\.gz)$/o) {$led_file = $1} #get led file path
+if ($opts{'l'} =~ /(.+LED_hg\d{2}_\d{4}_\d{2}_\d{2}\.vcf\.gz)$/o) {$led_file = $1} #get led file path
 if ($opts{'e'} =~ /(.+tabix)$/o) {$tabix = $1} #get tabix path
 
 
