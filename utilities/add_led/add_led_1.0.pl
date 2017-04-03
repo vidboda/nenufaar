@@ -33,14 +33,14 @@ while (<G>) {
 	chomp;
 	my $ligne = $_;
 	if (/Chr\sStart/o) {
-		if ($file =~ /barcoded/o) {$new_file = "$ligne\tLED#het/hem\tLED#hom\n";next;}
-		else {$new_file = "$ligne\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\tLED#het/hem\tLED#hom\n";next;}
+		if ($file =~ /barcoded/o) {$new_file = "$ligne\tLED#het/hem\tLED#hom\tLED URL\n";next;}
+		else {$new_file = "$ligne\t.\t.\t.\t.\t.\t.\t.\t.\t.\tLED#het/hem\tLED#hom\tLED URL\n";next;}
 
 	}
 	my @line = split(/\t/, $ligne);
 	my ($chr, $pos, $end, $ref, $alt) = (shift(@line), shift(@line), shift(@line), shift(@line), shift(@line));
 	if ($chr =~ /chr([\dXYM])/o) {$chr = $1}
-	my ($het, $hom) = (0, 0);
+	my ($het, $hom, $url) = (0, 0, '');
 	my @led =  split(/\n/, `$tabix $led_file $chr:$pos-$pos`);
 	foreach (@led) {
 		#print "$_\n";
@@ -48,9 +48,10 @@ while (<G>) {
 		if (/\t$ref\t$alt\t/) {
 			if ($current[5] eq 'homozygous') {$hom = $current[4]}
 			else {$het = $current[4]}
+			$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
 		}
 	}
-	$new_file .= "$ligne\t$het\t$hom\n";
+	$new_file .= "$ligne\t$het\t$hom\t$url\n";
 }
 
 close G;
