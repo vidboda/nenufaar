@@ -290,7 +290,8 @@ do
 	ckFileSz ${INPUT_PATH}${SAMPLE_FILE};
 	# ANNOTATION
 	if [ "${ANNOTATOR}" != 0 ]; then
-		if [ "${ANNOTATOR}" == 'annovar' ] || [ "${ANNOTATOR}" == 'merge' ]; then
+		#if [ "${ANNOTATOR}" == 'annovar' ] || [ "${ANNOTATOR}" == 'merge' ]; then
+		if [ "${ANNOTATOR}" == 'annovar' ]; then
 			echo "#############################################################################################"
 			echo "BCFTOOLS : pre-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
 			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${INPUT_PATH}${SAMPLE_FILE}.norm.vcf"
@@ -436,10 +437,10 @@ do
 
 			echo "#############################################################################################"
 			echo "ANNOVAR : Functional Annotation of Variants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-			echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147,dbnsfp31a_interpro${POP_FREQ_MAX},clinvar_20170130,kaviar_20150923,esp6500siv2_all,exac03,1000g2015aug_all,dbnsfp33a,mcap,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}}"
+			echo "COMMAND: ${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}"
 			echo "#############################################################################################"
 
-			${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${VCF} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
+			${SRUN_24_COMMAND} ${PERL} ${ANNOVAR}table_annovar.pl -thread ${NB_THREAD} ${INPUT_PATH}${SAMPLE_FILE} ${ANNOVAR_HUMAN_DB} -buildver hg19 -out ${OUTPUT_PATH}${SAMPLE_FILE}.annovar -remove -protocol refGene,avsnp147${POP_FREQ_MAX},clinvar_20170130,gnomad_exome,gnomad_genome,dbnsfp33a,dbscsnv11${SPIDEX} -operation g,f,f,f,f,f,f${POP_FREQ_MAX_OP}${SPIDEX_OP} -nastring . -vcfinput -arg '-splicing 100',,,,,,${POP_FREQ_MAX_COMMA}${SPIDEX_COMMA}
 
 			rm ${OUTPUT_PATH}${SAMPLE_FILE}.annovar.avinput
 			ckRes $? "ANNOVAR : Functional Annotation of Variants"

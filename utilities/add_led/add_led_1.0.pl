@@ -33,7 +33,7 @@ while (<G>) {
 	chomp;
 	my $ligne = $_;
 	if (/Chr\sStart/o) {
-		if ($file =~ /barcoded/o) {$new_file = "$ligne\tLED#het/hem\tLED#hom\tLED URL\n";next;}
+		if ($file =~ /barcoded/o || $file =~ /merged/o) {$new_file = "$ligne\tLED#het/hem\tLED#hom\tLED URL\n";next;}
 		else {$new_file = "$ligne\t.\t.\t.\t.\t.\t.\t.\t.\t.\tLED#het/hem\tLED#hom\tLED URL\n";next;}
 
 	}

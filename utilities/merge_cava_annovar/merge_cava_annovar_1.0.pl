@@ -42,7 +42,8 @@ close F;
 #foreach my $key (sort keys (%{$cava_content})) {
 #	print "$key - $cava_content->{$key}->[12]\n"
 #}
-my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 69, 71, 72, 79);#columns chr pos ref alt in original vcf - moves when adding annovar fields
+#my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 69, 71, 72, 79);#columns chr pos ref alt in original vcf - moves when adding annovar fields
+my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 108, 110, 111, 118);#columns chr pos ref alt in original vcf - moves when adding annovar fields
 open(G, "$annovar.$ext") or die "$annovar $!";
 while (<G>) {
 	my $line = $_;
