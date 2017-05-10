@@ -287,11 +287,11 @@ for SAMPLE_FILE_PATH in  ${SAMPLES_FILE_LIST[@]}
 do
 	SAMPLE_FILE=$(basename "${SAMPLE_FILE_PATH}")
 	echo "CURRENT SAMPLE FILE: ${SAMPLE_FILE}"
-	ckFileSz ${INPUT_PATH}${SAMPLE_FILE};
+	ckFileSz ${INPUT_PATH}${SAMPLE_FILE}
 	# ANNOTATION
 	if [ "${ANNOTATOR}" != 0 ]; then
 		#if [ "${ANNOTATOR}" == 'annovar' ] || [ "${ANNOTATOR}" == 'merge' ]; then
-		if [ "${ANNOTATOR}" == 'annovar' ]; then
+		if [ "${ANNOTATOR}" == 'annovar' ] && [ "${MULTISAMPLE}" == 'false' ]; then
 			echo "#############################################################################################"
 			echo "BCFTOOLS : pre-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
 			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${INPUT_PATH}${SAMPLE_FILE}.norm.vcf"
@@ -303,6 +303,8 @@ do
 			ckRes $? "BCFTOOLS : pre-processing of VCF "
 			ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
 			VCF=${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+		elif [ "${MULTISAMPLE}" == 'true' ];then
+			VCF=${INPUT_PATH}${SAMPLE_FILE}
 		fi
 			
 		case ${ANNOTATOR} in
