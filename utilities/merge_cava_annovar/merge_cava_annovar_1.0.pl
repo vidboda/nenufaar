@@ -83,7 +83,7 @@ exit;
 
 sub HELP_MESSAGE {
 	print "\nUsage: ./merge_cava_annovar.1.0.pl -a path/to/annovar/file.txt -c path/to/cava/file.txt \nSupports --help or --version\n\n
-### This script merges annotation files form cava and annovar, obtained from IURC_VFC_ANNOT_1.1.sh
+### This script merges annotation files form cava and annovar, obtained from nenufaar_annot.sh
 ### -a annovar annotation file
 ### -c cava annotation file
 ### contact: david.baux\@inserm.fr\n\n"
