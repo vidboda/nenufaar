@@ -33,7 +33,6 @@ Options:
 	-m,	--multi_sample	for annovar, true, false, will add '-allsample -withfreq' args in convert2annovar.pl script if true
 	-l,	--gene_list	path to a txt file with a #NAME and a list of genes to be marked in a annovar file
 	-cu,	--clean_up	Boolean true, false: set to false to keep intermediate files (for dev purpose)
-	-cftr,	--cftr		check against IURC CFTR database, true, false default false
 
 Directories Arborescence:
 
@@ -135,10 +134,6 @@ case "${KEY}" in
 	LOG_FILE="$2"
 	shift
 	;;
-	-cftr|--cftr)
-	CFTR="$2"
-	shift
-	;;
 	*)
 	echo "Error Message : Unknown option $i" # unknown option
 	exit
@@ -154,7 +149,11 @@ fi
 
 if [ -z "${OUTPUT_PATH}" ];then
 	mkdir ${INPUT_PATH}annotated
-	OUTPUT_PATH=$${INPUT_PATH}annotated
+	OUTPUT_PATH=${INPUT_PATH}annotated
+fi
+
+if [[ "${OUTPUT_PATH}" =~ .+[^\/]$ ]];then
+	OUTPUT_PATH="${OUTPUT_PATH}/"
 fi
 
 if [ -z "${INPUT_PATH}" ] || [ -z "${ANNOTATOR}" ] || [ -z "${GENOME}" ]; then
@@ -278,6 +277,7 @@ ckFileSz() {
 ###########################################################################
 ###########################################################################
 
+SUFFIX=''
 
 SAMPLES_FILE_LIST=(${INPUT_PATH}*.vcf)
 echo "SAMPLES_FILE_LIST : ${SAMPLES_FILE_LIST[@]}"
@@ -322,6 +322,7 @@ do
 		;;
 		"annovar")
 			if [ "${FILTER}" == 'true' ];then
+				SUFFIX='filtered'
 				echo "#############################################################################################"
 				echo "ANNOVAR : Prepare avinput - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
 				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${PERL} ${ANNOVAR}convert2annovar.pl -format vcf4 ${SAMPLE_ARG} -includeinfo ${INPUT_PATH}${SAMPLE_FILE} -outfile ${INPUT_PATH}${SAMPLE_FILE}.avinput"
@@ -426,6 +427,7 @@ do
 			fi
 		;;
 		"merge")
+			SUFFIX='HGVS'
 			echo "#############################################################################################"
 			echo "CAVA : VCF Clinical Annotation of VAriants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
 			echo "COMMAND: ${SRUN_24_COMMAND} ${PYTHON} ${CAVA} -c ${CAVA_DIR}config.txt -i ${INPUT_PATH}${SAMPLE_FILE} -o ${OUTPUT_PATH}${SAMPLE_FILE}.cava"
@@ -512,22 +514,6 @@ do
 			TXT_FILE=${NEW_FILE}
 		fi
 
-		if [ "${CFTR}" == 'true' ]; then
-			echo "#############################################################################################"
-			echo "PERL : Add CFTR Catalog data - `date` ID_ANALYSE : ${ID} - SAMPLE : ${SAMPLE_FILE}"
-			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_CFTR} -t ${TXT_FILE} -e ${TABIX} -c ${CFTR_CATALOG}"
-			echo "#############################################################################################"
-
-			#home made perl script to add cftr frequency data (obtained for Taulan's group (jess))
-			NEW_FILE=$(${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_CFTR} -t ${TXT_FILE} -e ${TABIX} -c ${CFTR_CATALOG})
-			ckRes $? "PERL : Add CFTR data "
-			ckFileSz ${NEW_FILE}
-			if [ "${CLEAN_UP}" == 'true' ];then
-				rm ${TXT_FILE}
-			fi
-			TXT_FILE=${NEW_FILE}
-		fi
-
 		if [ "${LIST}" != '' ]; then
 
 			echo "#############################################################################################"
@@ -545,7 +531,6 @@ do
 			TXT_FILE=${NEW_FILE}
 		fi
 
-
 		POSITION='7'
 		POSITION_END='9'
 		if [ "${LIST}" != '' ];then
@@ -554,17 +539,17 @@ do
 		fi
 		echo "#############################################################################################"
 		echo "BASH/AWK/JOIN/CUT : Add OMIM annotation - `date` ID_ANALYSE : ${ID} - SAMPLE : ${SAMPLE_FILE}"
-		echo "COMMAND: LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=\$${POSITION}; \$${POSITION}=\"\"; print k\"\t\""'$0'"}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print "'$0'" | \"sort -k1,1\"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt"
+		echo "COMMAND: LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=\$${POSITION}; \$${POSITION}=\"\"; print k\"\t\""'$0'"}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print "'$0'" | \"sort -k1,1\"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.${SUFFIX}.final.txt"
 		echo "#############################################################################################"
 
 		#genemapR file MUST be SORTED with cat genemapR.txt | awk 'NR == 1; NR > 1 {print $0 | "LANG=en_EN sort -k1,1"}' > genemapR_sorted.txt
 
-		LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=$'${POSITION}'; $'${POSITION}'=""; print k"\t"$0}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print $0 | "sort -k1,1"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt
+		LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=$'${POSITION}'; $'${POSITION}'=""; print k"\t"$0}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print $0 | "sort -k1,1"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.${SUFFIX}.final.txt
 		#LOCALE=C
 		#sorted file on gene names - if we want to revert and sort on chr/pos, replace ">${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" with "| sort -k2,3 >${OUTPUT_PATH}${SAMPLE_FILE}.final.txt" or -k3,4 if marked file
 		#ckRes $? "BASH/AWK/JOIN/CUT : Add OMIM annotation "
-		ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.final.txt
-
+		ckFileSz "${OUTPUT_PATH}${SAMPLE_FILE}.${SUFFIX}.final.txt"
+		
 		if [ "${CLEAN_UP}" == 'true' ];then
 			rm ${TXT_FILE}
 		fi
