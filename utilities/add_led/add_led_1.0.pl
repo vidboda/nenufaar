@@ -67,28 +67,18 @@ while (<G>) {
 			#else {$het = $current[4]}
 			#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
 		}
-		elsif (/\t$ref/) {
+		elsif (/\t$ref/) {#case ref with multiple entries (e.g. C,CAA) either in target file (case 1) of in led file (case 2)
 			if ($alt =~ /,/o) {
-					my @poss = split(/,/, $alt);
-					foreach (@poss)	{
-						if ($current[3] eq $_) {
-							($het, $hom, $url) = &populate(\@current);
-							#if ($current[5] eq 'homozygous') {$hom = $current[4]}
-							#else {$het = $current[4]}
-							#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
-						}
-					}
+				my @poss = split(/,/, $alt);
+				foreach (@poss)	{
+					if ($current[3] eq $_) {($het, $hom, $url) = &populate(\@current)}
+				}
 			}
 			elsif ($current[3] =~ /,/o) {
-					my @poss = split(/,/, $current[3]);
-					foreach (@poss)	{
-						if ($alt eq $_) {
-							($het, $hom, $url) = &populate(\@current);
-							#if ($current[5] eq 'homozygous') {$hom = $current[4]}
-							#else {$het = $current[4]}
-							#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
-						}
-					}
+				my @poss = split(/,/, $current[3]);
+				foreach (@poss)	{
+					if ($alt eq $_) {($het, $hom, $url) = &populate(\@current)}
+				}
 			}
 		}
 		
