@@ -38,18 +38,60 @@ while (<G>) {
 
 	}
 	my @line = split(/\t/, $ligne);
-	my ($chr, $pos, $end, $ref, $alt) = (shift(@line), shift(@line), shift(@line), shift(@line), shift(@line));
+	my $k = 0;
+	#my ($chr, $pos, $end, $ref, $alt) = (shift(@line), shift(@line), shift(@line), shift(@line), shift(@line));
+	my ($chr, $pos, $end, $ref, $alt) = ($line[0], $line[1], $line[2], $line[3], $line[4]);
+	shift(@line);
+	if ($ref eq '-' || $alt eq '-') {
+		foreach my $item (@line) {		
+			if ($item =~ /chr[\dXYM]/o) {
+				#$chr = $1;
+				($pos, $ref, $alt) = ($line[$k+1], $line[$k+3], $line[$k+4]);
+				#print "$chr-$pos-$ref-$alt\n";
+				last;
+			}
+			$k++;
+		}
+	}
+	#my ($chr, $pos, $end, $ref, $alt) = (shift(@line), shift(@line), shift(@line), shift(@line), shift(@line));
 	if ($chr =~ /chr([\dXYM])/o) {$chr = $1}
 	my ($het, $hom, $url) = (0, 0, '');
 	my @led =  split(/\n/, `$tabix $led_file $chr:$pos-$pos`);
+	#print "$tabix $led_file $chr:$pos-$pos\n";
 	foreach (@led) {
 		#print "$_\n";
 		my @current = split(/\t/, $_);
 		if (/\t$ref\t$alt\t/) {
-			if ($current[5] eq 'homozygous') {$hom = $current[4]}
-			else {$het = $current[4]}
-			$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
+			($het, $hom, $url) = &populate(\@current);
+			#if ($current[5] eq 'homozygous') {$hom = $current[4]}
+			#else {$het = $current[4]}
+			#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
 		}
+		elsif (/\t$ref/) {
+			if ($alt =~ /,/o) {
+					my @poss = split(/,/, $alt);
+					foreach (@poss)	{
+						if ($current[3] eq $_) {
+							($het, $hom, $url) = &populate(\@current);
+							#if ($current[5] eq 'homozygous') {$hom = $current[4]}
+							#else {$het = $current[4]}
+							#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
+						}
+					}
+			}
+			elsif ($current[3] =~ /,/o) {
+					my @poss = split(/,/, $current[3]);
+					foreach (@poss)	{
+						if ($alt eq $_) {
+							($het, $hom, $url) = &populate(\@current);
+							#if ($current[5] eq 'homozygous') {$hom = $current[4]}
+							#else {$het = $current[4]}
+							#$url = "https://194.167.35.158/perl/led/variant.pl?var=$current[6]";
+						}
+					}
+			}
+		}
+		
 	}
 	$new_file .= "$ligne\t$het\t$hom\t$url\n";
 }
@@ -75,4 +117,11 @@ sub HELP_MESSAGE {
 
 sub VERSION_MESSAGE {
 	print "\nVersion 1.0 09/08/2016\n"
+}
+sub populate {
+	my $current = shift;
+	my ($hom, $het) = (0, 0);
+	if ($current->[5] eq 'homozygous') {$hom = $current->[4]}
+	else {$het = $current->[4]}
+	return ($het, $hom, "https://194.167.35.158/perl/led/variant.pl?var=$current->[6]");	
 }
