@@ -539,7 +539,7 @@ do
 		fi
 		echo "#############################################################################################"
 		echo "BASH/AWK/JOIN/CUT : Add OMIM annotation - `date` ID_ANALYSE : ${ID} - SAMPLE : ${SAMPLE_FILE}"
-		echo "COMMAND: LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\t -v OFS='\t' '{k=\$${POSITION}; \$${POSITION}=\"\"; print k\"\t\""'$0'"}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print "'$0'" | \"sort -k1,1\"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.${SUFFIX}.final.txt"
+		echo "COMMAND: LANG=en_EN ${JOIN} -a 1 -t $'\t' -1 1 -2 1 <(${CAT} ${TXT_FILE} | ${AWK}  -F\\\t -v OFS='\t' '{k=\$${POSITION}; \$${POSITION}=\"\"; print k\"\t\""'$0'"}' | ${CUT} -f-${POSITION},${POSITION_END}- | ${AWK} 'NR==1; NR>1 {print "'$0'" | \"sort -k1,1\"}') ${GENEMAPR} >${OUTPUT_PATH}${SAMPLE_FILE}.${SUFFIX}.final.txt"
 		echo "#############################################################################################"
 
 		#genemapR file MUST be SORTED with cat genemapR.txt | awk 'NR == 1; NR > 1 {print $0 | "LANG=en_EN sort -k1,1"}' > genemapR_sorted.txt

@@ -43,7 +43,7 @@ close F;
 #	print "$key - $cava_content->{$key}->[12]\n"
 #}
 #my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 69, 71, 72, 79);#columns chr pos ref alt in original vcf - moves when adding annovar fields
-my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 108, 110, 111, 118);#columns chr pos ref alt in original vcf - moves when adding annovar fields
+my ($chr_pos, $pos_pos, $ref_pos, $alt_pos, $end_pos) = (0, 108, 110, 111, 116);#columns chr pos ref alt in original vcf - moves when adding annovar fields
 open(G, "$annovar.$ext") or die "$annovar $!";
 while (<G>) {
 	my $line = $_;
@@ -64,7 +64,7 @@ while (<G>) {
 			$merged .= $line.$insert."\t".join("\t", @{$cava_content->{"$annovar_content[$chr_pos]-$annovar_content[$pos_pos]-$annovar_content[$ref_pos]-$annovar_content[$alt_pos]"}})."\n"
 		}		
 	}
-	else {$header = $line."\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t".$header}
+	else {$header = $line."\t\t\t\t\t\t\t\t\t\t\t\t\t".$header}
 }
 $merged = $header.$merged;
 

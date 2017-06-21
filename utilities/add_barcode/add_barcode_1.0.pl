@@ -46,7 +46,12 @@ while (<G>) {
 		$header = $_;
 		#get 'otherinfo' index
 		my @header_line = split(/\t/, $header);
-		foreach (@header_line) {$i++}
+		foreach (@header_line) {
+			#to make it work in merge annovar/cava context, we look for the first empty cell
+			$i++;
+			if ($_ eq '') {last}
+			#$i++
+		}
 		#print $i;exit;
 	}
 	elsif (/chr[\dXY]/o) {
@@ -59,7 +64,10 @@ while (<G>) {
 				if ($line[$k] =~ /^\d\/\d:/o || $line[$k] eq './.') {
 					my $limit = ($k-$i)+1;
 					for (my $l = 1;$l <= $limit;$l++) {$header .= "\t"}
-					$header .= $list;
+					#$header .= $list;
+					$header =~ s/\t\t\t\t\t\t\t\t\t\t\t\t/\t\t\t\t\t\t\t\t\t\t\t\t$list/;
+					$header =~ s/$list\t+/$list\t\t\t/;
+					$header =~ s/\t\t\t\t\t\t\t\t\t\t\t$//o;
 					$new_file = "$header\tBarcode\n";
 					$j = 1;
 				}
