@@ -194,6 +194,8 @@ if [ "${GENOME}" == 'hg19' ];then
 	POP_FREQ_MAX=",popfreq_max_20150413"
 	POP_FREQ_MAX_OP=",f"
 	POP_FREQ_MAX_COMMA=","
+elif [ "${GENOME}" == 'hg38' ];then
+	REF_PATH=refData/genome/hg38/hg38.fa
 fi
 if [ "${MULTISAMPLE}" == 'true' ];then
 	SAMPLE_ARG='-allsample -withfreq'
