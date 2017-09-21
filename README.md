@@ -121,7 +121,7 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 To test a new version, please ensure that the different workflow still run without errors. Current tests involve:
 
-*	nenufaar itself:
+### nenufaar itself:
 
 ```bash
 
@@ -137,7 +137,7 @@ will launch:
 
 *	-p amplicon	// test amplicon workflow (no dupmark, GATK RTC&IR , caller GATK UG)
 
-To test mnenufaar, launch:
+### To test mnenufaar, launch:
 
 ```bash
 
@@ -145,13 +145,15 @@ nohup sh tests/mnenufaar_test.sh -v version_number &
 
 ```
 
-To test the annotation module, launch:
+### To test the annotation module, launch:
 
 ```bash
 
-nohup sh tests/nenufaar_annot_test.sh -v version_number & // will launch
+nohup sh tests/nenufaar_annot_test.sh -v version_number &
 
 ```
+
+will launch:
 
 *		hg19 ANNOVAR
 
