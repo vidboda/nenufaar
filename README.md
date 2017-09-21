@@ -24,12 +24,10 @@ Nenufaar comes with two companion scripts:
 
 *	mnenufaar (for meta-nenufaar) which is a kind of family mode in the sense that it will generate BAMs, merge them and perform the calling on this single BAM. The final resulting annotated tsv e.g. from ANNOVAR will contain an extra column 'barcode' which indicates who in the family is heterozygous/homozygous, etc for the considered variant. Options are the same than for nenufaar.
 
-## Warning
+## Install & Config
 
 
-Only runs on an HPC environment - is currently configured to run on SLURM
-
-**This version can be ran through meta_nenufaar**
+TODO
 
 
 ## Architecture
