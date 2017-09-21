@@ -1,11 +1,8 @@
-#Nenufaar v2.4
+# Nenufaar v2.4
 
+DNA NGS pipeline
 
-
-Note: this documentation is in english as markdown seems to deal really bad with french accents
-
-
-##Goals
+## Goals
 
 
 
@@ -23,7 +20,7 @@ Main steps are:
 *	2nd variant calling step (Platypus) and merging (GATK)
 *	Annotation (via nenufaar_annot.sh)
 
-##Warning
+## Warning
 
 
 
@@ -32,7 +29,7 @@ Only runs on an HPC environment - is currently configured to run on SLURM
 **This version can be ran through meta_nenufaar**
 
 
-##Architecture
+## Architecture
 
 
 
@@ -73,11 +70,11 @@ Example:
 
 The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
-##Arguments
+## Arguments
 
 *	-i,  --input_path    sets the absolute path to input directory (must be created before script execution) => above
 
-##Options
+## Options
 
 
 *	-h,  --help	Shows this help text
@@ -120,7 +117,7 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 *	-log,  --log-file	Path to log file
 
-##Tests
+## Tests
 
 To test a new version, please ensure that the different workflow still run without errors. Current tests involve:
 
@@ -152,7 +149,7 @@ To test the annotation module, launch:
 
 Results can be found in tests/logs/nenufaar(or mnenufaar or nenufaar_annot)/version_number/SUMMARY.log
 
-##Workflow
+## Workflow
 
 nenufaar:
 
@@ -162,7 +159,7 @@ nenufaar_annot:
 
 ![Nenufaar workflow](img/nenufaar_annot_1.6.png)
 
-##Operation
+## Operation
 
 
 The idea is to modifiy the behaviour of the script for example depending on downsampling conditions.
@@ -190,7 +187,7 @@ A second option -a will make the script use either CAVA or ANNOVAR as annotator 
 All configuration variables are stored in a separate nenufaar.conf file
 
 
-##Detailed steps
+## Detailed steps
 
 
 *	Fastqc :  Quality Control - FatsQC generates a web report on raw data, and establishes the overall quality of the sample in terms of sequence quality, read lengths, per base content...
@@ -251,7 +248,7 @@ Depending on -a (default, no annotation), the vcf is annotated with:
 *	Annotation step is performed via IURC_VCF_ANNOT_version.sh
 
 
-##Docs
+## Docs
 
 
 *	[BWA](http://bio-bwa.sourceforge.net/bwa.shtml)
@@ -264,9 +261,3 @@ Depending on -a (default, no annotation), the vcf is annotated with:
 *	[JVARKIT](https://github.com/lindenb/jvarkit)
 *	[SAMBAMBA](http://lomereiter.github.io/sambamba/docs/sambamba-view.html)
 *	[PLATYPUS](http://www.well.ox.ac.uk/platypus)
-
-##Home
-
-[IURC Doc index](http://194.167.35.137/doc/)# Welcome to MkDocs
-
-For full documentation visit [mkdocs.org](http://mkdocs.org).
