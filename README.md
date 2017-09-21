@@ -5,9 +5,7 @@ DNA NGS pipeline
 ## Goals
 
 
-
 Perform a full analysis of a NGS run form the sequences (fastQ files) to the variants annotation.
-
 
 
 Main steps are:
@@ -19,6 +17,10 @@ Main steps are:
 *	Variant calling and filtration (GATK, jvarkit, home made perl script)
 *	2nd variant calling step (Platypus) and merging (GATK)
 *	Annotation (via nenufaar_annot.sh)
+
+Nenufaar comes with two companion scripts, nenufaar_annot which performs the annotation of the VCFs generated with nenufaar, and mnenufaar (for meta-nenufaar) which is a kind of family mode in the sense that it will generate BAMs, merge them and perform the calling in this single BAM. The final resulting annotated tsv e.g. from ANNOVAR will contain an extra column 'barcode' which indicates who in the family is heterozygous/homozygous, etc for the considered variant. 
+
+
 
 ## Warning
 
