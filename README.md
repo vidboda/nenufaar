@@ -123,7 +123,7 @@ To test a new version, please ensure that the different workflow still run witho
 
 *	nenufaar itself:
 
-``bash
+```bash
 
 nohup sh tests/nenufaar_test.sh -v version_number &
 
@@ -139,7 +139,7 @@ will launch:
 
 To test mnenufaar, launch:
 
-``bash
+```bash
 
 nohup sh tests/mnenufaar_test.sh -v version_number &
 
@@ -147,7 +147,7 @@ nohup sh tests/mnenufaar_test.sh -v version_number &
 
 To test the annotation module, launch:
 
-``bash
+```bash
 
 nohup sh tests/nenufaar_annot_test.sh -v version_number & // will launch
 
