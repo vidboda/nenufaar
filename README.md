@@ -18,12 +18,13 @@ Main steps are:
 *	2nd variant calling step (Platypus) and merging (GATK)
 *	Annotation (via nenufaar_annot.sh)
 
-Nenufaar comes with two companion scripts, nenufaar_annot which performs the annotation of the VCFs generated with nenufaar, and mnenufaar (for meta-nenufaar) which is a kind of family mode in the sense that it will generate BAMs, merge them and perform the calling in this single BAM. The final resulting annotated tsv e.g. from ANNOVAR will contain an extra column 'barcode' which indicates who in the family is heterozygous/homozygous, etc for the considered variant. 
+Nenufaar comes with two companion scripts:
 
+*	nenufaar_annot which performs the annotation of the VCFs generated with nenufaar and can be an as a standalone
 
+*	mnenufaar (for meta-nenufaar) which is a kind of family mode in the sense that it will generate BAMs, merge them and perform the calling on this single BAM. The final resulting annotated tsv e.g. from ANNOVAR will contain an extra column 'barcode' which indicates who in the family is heterozygous/homozygous, etc for the considered variant. Options are the same than for nenufaar.
 
 ## Warning
-
 
 
 Only runs on an HPC environment - is currently configured to run on SLURM
@@ -32,7 +33,6 @@ Only runs on an HPC environment - is currently configured to run on SLURM
 
 
 ## Architecture
-
 
 
 It is a shell script named nenufaar.sh which can analyse several samples successively. The structure of the input folder should look like this:
