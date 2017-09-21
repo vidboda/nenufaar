@@ -121,21 +121,31 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 To test a new version, please ensure that the different workflow still run without errors. Current tests involve:
 
-*	nenufaar itself:	nohup sh tests/nenufaar_test.sh -v version_number & // will launch:
+*	nenufaar itself:
 
-*		-p wgs		// test whole genome workflow (no dupmark, no GATK BR&PR, no GATK DoC&QMI, caller GATK HC)
+'''bash
+nohup sh tests/nenufaar_test.sh -v version_number &
+'''
 
-*		-p capture	// test capture workflow (dupmark, GATK BR&PR , caller GATK HC), includes annotation
+will launch:
 
-*		-p amplicon	// test amplicon workflow (no dupmark, GATK RTC&IR , caller GATK UG)
+*	-p wgs		// test whole genome workflow (no dupmark, no GATK BR&PR, no GATK DoC&QMI, caller GATK HC)
+
+*	-p capture	// test capture workflow (dupmark, GATK BR&PR , caller GATK HC), includes annotation
+
+*	-p amplicon	// test amplicon workflow (no dupmark, GATK RTC&IR , caller GATK UG)
 
 To test mnenufaar, launch:
 
-*	nohup sh tests/mnenufaar_test.sh -v version_number &
+'''bash
+nohup sh tests/mnenufaar_test.sh -v version_number &
+'''
 
 To test the annotation module, launch:
 
-*	nohup sh tests/nenufaar_annot_test.sh -v version_number & // will launch
+'''bash
+nohup sh tests/nenufaar_annot_test.sh -v version_number & // will launch
+'''
 
 *		hg19 ANNOVAR
 
