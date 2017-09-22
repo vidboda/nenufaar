@@ -454,7 +454,7 @@ fi
 #if [ "${#QUALIMAP}" -ne 0 ];then
 #creates BED file from Intervals if does not exists
 if [[ ! -s ${INPUT_PATH}Intervals.bed ]];then
-	${AWK} 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
+	${AWK} 'BEGIN { FS="[:-]";OFS="\t"} {print $1,$2-1,$3,"region","0","+"}' ${INPUT_PATH}Intervals.list > ${INPUT_PATH}Intervals.bed
 fi
 
 ${SORT} -k1,1 -k2,2n -k3,3n ${INPUT_PATH}Intervals.bed > ${INPUT_PATH}Intervals.sorted.bed
