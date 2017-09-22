@@ -22,3 +22,14 @@ nenufaar_annot.conf
 tests/logs/*
 tests/vcf/
 divers/*
+doc/
+utilities/add_omim_deprecated/*
+utilities/vcf_compare/*
+utilities/bed2intervals.txt
+utilities/test_opt.pl
+utilities/mark_gene_list/A*
+utilities/mark_gene_list/test/*
+utilities/create_doc_graphs/*
+utilities/change_intervals/
+utilities/add_cftr/*
+utilities/bed2picardintervals/*
