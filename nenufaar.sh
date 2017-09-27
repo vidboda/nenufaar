@@ -771,10 +771,11 @@ do
 			if [ "${CALLER}" == 'ug' ]; then
 				echo "#############################################################################################"
 				echo "GATK : UnifiedGenotyper - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T UnifiedGenotyper -glm BOTH -nt ${NB_THREAD} -stand_call_conf ${STAND_CALL_CONF} -stand_emit_conf ${STAND_EMIT_CONF} -dcov ${DCOV} -A AlleleBalanceBySample -A ReadPosRankSumTest -dt NONE ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -I ${BAM} -R ${REF_PATH} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf"
+				echo "COMMAND: ${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T UnifiedGenotyper -glm BOTH -nt ${NB_THREAD} -stand_call_conf ${STAND_CALL_CONF} -dcov ${DCOV} -A AlleleBalanceBySample -A ReadPosRankSumTest -dt NONE ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -I ${BAM} -R ${REF_PATH} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf"
 				echo "#############################################################################################"
+				#removed -stand_emit_conf ${STAND_EMIT_CONF} for GATK 3.8
 
-				${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T UnifiedGenotyper -glm BOTH -nt ${NB_THREAD} -stand_call_conf ${STAND_CALL_CONF} -stand_emit_conf ${STAND_EMIT_CONF} -dcov ${DCOV} -A AlleleBalanceBySample -A ReadPosRankSumTest -dt NONE ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -I ${BAM} -R ${REF_PATH} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf
+				${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T UnifiedGenotyper -glm BOTH -nt ${NB_THREAD} -stand_call_conf ${STAND_CALL_CONF} -dcov ${DCOV} -A AlleleBalanceBySample -A ReadPosRankSumTest -dt NONE ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -I ${BAM} -R ${REF_PATH} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf
 
 				ckRes $? "GATK : UnifiedGenotyper  "
 				#HARD_TO_VALIDATE='--filterExpression "MQ0 > 4 && ((MQ0 / (1.0 \* DP)) > 0.1)" --filterName "HARD_TO_VALIDATE"'
