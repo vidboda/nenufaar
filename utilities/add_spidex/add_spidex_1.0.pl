@@ -28,7 +28,7 @@ my $TABIX="software/tabix-$TABIX_VERSION/tabix";
 
 my $SPIDEX_VERSION='1.0';
 #my $SPIDEX="/Users/galaxy_dev_user/variant-calling-pipeline-dev/refData/spidex_public_noncommercial/$SPIDEX_VERSION/spidex.tab.gz";
-my $SPIDEX="refData/spidex_public_noncommercial/spidex_public_noncommercial_v$SPIDEX_VERSION.tab.gz";
+my $SPIDEX="refData/spidex_public_noncommercial_v$SPIDEX_VERSION/spidex_public_noncommercial_v$SPIDEX_VERSION.tab.gz";
 #print $SPIDEX;
 #exit;
 if ($opts{'i'} =~ /(.+)\.(txt|tsv)$/o) {$file = $1;$ext = $2;} #get file path and prefix and suffix
@@ -60,6 +60,7 @@ while (<F>) {
 		#if ($chr =~ /chr([0-9XY]{1,2})/o) {$chr = $1}
 		#check if substitution
 		if ($wt =~ /^[ATGC]{1}$/o && $mt =~ /^[ATGC]{1}$/o) {
+			print "$TABIX $SPIDEX $chr:$pos-$pos\n";exit;
 			my @spidex = split(/\n/, `$TABIX $SPIDEX $chr:$pos-$pos`);
 			my $semaph = 0;
 			foreach (@spidex) {
