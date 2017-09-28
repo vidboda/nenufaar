@@ -60,7 +60,7 @@ while (<F>) {
 		#if ($chr =~ /chr([0-9XY]{1,2})/o) {$chr = $1}
 		#check if substitution
 		if ($wt =~ /^[ATGC]{1}$/o && $mt =~ /^[ATGC]{1}$/o) {
-			print "$TABIX $SPIDEX $chr:$pos-$pos\n";exit;
+			#print "$TABIX $SPIDEX $chr:$pos-$pos\n";exit;
 			my @spidex = split(/\n/, `$TABIX $SPIDEX $chr:$pos-$pos`);
 			my $semaph = 0;
 			foreach (@spidex) {
