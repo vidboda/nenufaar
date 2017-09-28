@@ -30,6 +30,10 @@ Nenufaar comes with two companion scripts:
 TODO
 
 
+## Warning
+
+Nenufaar extensively uses GATK 3.8, therefore is currently limited to academic users or users with a proper GATK license
+
 ## Architecture
 
 
