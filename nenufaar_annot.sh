@@ -470,10 +470,10 @@ do
 	if [ "${ANNOTATOR}" == 'cava' ]; then
 		echo "#############################################################################################"
 		echo "PERL : Add spidex - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-		echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_SPIDEX} -i ${TXT_FILE}"
+		echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_SPIDEX} -i ${TXT_FILE} -e ${TABIX} -s ${SPIDEX_PATH}"
 		echo "#############################################################################################"
 
-		NEW_FILE=$(${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_SPIDEX} -i ${TXT_FILE})
+		NEW_FILE=$(${SRUN_SIMPLE_COMMAND} ${PERL} -w ${IURC_ADD_SPIDEX} -i ${TXT_FILE} -e ${TABIX} -s ${SPIDEX_PATH})
 		ckRes $? "PERL : Add spidex "
 		ckFileSz ${NEW_FILE}
 		if [ "${CLEAN_UP}" == 'true' ];then
