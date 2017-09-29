@@ -2,6 +2,17 @@
 
 DNA NGS pipeline
 
+- [Goals](#Goals)
+- [Install & Config](#Install & Config)
+- [Warning](#Warning)
+- [Architecture](#Architecture)
+- [Arguments](#Arguments)
+- [Options](#Options)
+- [Tests](#Tests)
+- [Workflow](#Workflow)
+- [Operation](#Operation)
+- [Docs](#Docs)
+
 ## Goals
 
 
@@ -283,3 +294,16 @@ Depending on -a (default, no annotation), the vcf is annotated with:
 *	[JVARKIT](https://github.com/lindenb/jvarkit)
 *	[SAMBAMBA](http://lomereiter.github.io/sambamba/docs/sambamba-view.html)
 *	[PLATYPUS](http://www.well.ox.ac.uk/platypus)
+
+
+--------------------------------------------------------------------------------
+
+**Montpellier Bioinformatique pour le Diagnostique Clinique (MoBiDiC)**
+
+*CHU de Montpellier*
+
+France
+
+![](img/mobidic.png)
+
+--------------------------------------------------------------------------------
