@@ -184,15 +184,15 @@ Results can be found in tests/logs/nenufaar(or mnenufaar or nenufaar_annot)/vers
 
 ## Workflow
 
-nenufaar:
+### nenufaar:
 
 ![Nenufaar workflow](img/nenufaar_2.4.png)
 
-nenufaar_annot:
+### nenufaar_annot:
 
 ![Nenufaar workflow](img/nenufaar_annot_1.6.png)
 
-metanenufaar (mnenufaar):
+### metanenufaar (mnenufaar):
 
 ![Nenufaar workflow](img/mnenufaar_0.1.1.png)
 
