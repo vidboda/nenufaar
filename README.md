@@ -3,7 +3,7 @@
 DNA NGS pipeline
 
 - [Goals](#Goals)
-- [Install & Config](#Install & Config)
+- [Install & Config](#Install--Config)
 - [Warning](#Warning)
 - [Architecture](#Architecture)
 - [Arguments](#Arguments)
@@ -191,6 +191,10 @@ nenufaar:
 nenufaar_annot:
 
 ![Nenufaar workflow](img/nenufaar_annot_1.6.png)
+
+metanenufaar (mnenufaar):
+
+![Nenufaar workflow](img/mnenufaar_0.1.1.png)
 
 ## Operation
 
