@@ -2,16 +2,16 @@
 
 DNA NGS pipeline
 
-- [Goals](#Goals)
-- [Install & Config](#Install--Config)
-- [Warning](#Warning)
-- [Architecture](#Architecture)
-- [Arguments](#Arguments)
-- [Options](#Options)
-- [Tests](#Tests)
-- [Workflow](#Workflow)
-- [Operation](#Operation)
-- [Docs](#Docs)
+- [Goals](#goals)
+- [Install & Config](#install--config)
+- [Warning](#warning)
+- [Architecture](#architecture)
+- [Arguments](#arguments)
+- [Options](#options)
+- [Tests](#tests)
+- [Workflow](#workflow)
+- [Operation](#operation)
+- [Docs](#docs)
 
 ## Goals
 
