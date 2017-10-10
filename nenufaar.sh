@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.4.2
+VERSION=2.4.3
 TESTED=yes
 USAGE="
 Program: nenufaar
@@ -45,9 +45,10 @@ Options:
     -b,		--bam_only			Only generates BAM files
     -vc		--variant_calling_only		Processes variant calling from a single BAM
     -id,	--processus_id			defines a non-random processus id
-    -l,		--gene_list path to a txt file with a #NAME and a list of genes to be marked in a annovar file
+    -l,		--gene_list 			path to a txt file with a #NAME and a list of genes to be marked in a annovar file
     -cu,	--clean_up			Boolean true, false: set to false to keep intermediate files (for dev purpose)
     -log,	--log-file			Path to log file
+    -cf,	--config-file			Provide a config file path, e.g. for containers
 
 
  Docs:
@@ -113,22 +114,36 @@ fi
 CONFIG_FILE=nenufaar.conf
 
 #we check params against regexp
-
-UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
-if [ -n "${UNKNOWN}" ]; then
-	 echo "Error in config file. Not allowed lines:"
-	 echo "${UNKNOWN}"
-	 exit 1
+if [ -e "${CONFIG_FILE}" ];then
+	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+	if [ -n "${UNKNOWN}" ]; then
+		 echo "Error in config file. Not allowed lines:"
+		 echo "${UNKNOWN}"
+		 exit 1
+	fi
+	source ./${CONFIG_FILE}	
+	echo ""
+	echo "#############################################################################################"
+	echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
+	echo "##############################################################################################"
+else
+	EXTERNAL_CONFIG="true"
 fi
 
-source ./${CONFIG_FILE}
 
-echo ""
-echo "#############################################################################################"
-echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
-echo "##############################################################################################"
+##############	Is the version suitable?
 
-#source nenufaar.conf
+if [ "${TESTED}" == 'false' ];then
+	echo ""
+	echo "#############################################################################################"
+	echo "This version has been properly tested - you can use it quite safely"
+	echo "##############################################################################################"
+else
+	echo ""
+	echo "#############################################################################################"
+	echo "This development version has not been properly tested - you can use it at your own risk"
+	echo "##############################################################################################"
+fi
 
 ###############		Get arguments from command line			#################################
 
@@ -216,6 +231,10 @@ case "${KEY}" in
 	LOG_FILE="$2"
 	shift
 	;;
+	-cf|--config-file)
+	CONFIG_FILE="$2"
+	shift
+	;;
 	-h|--help)
 	echo "${USAGE}"
 	exit 1
@@ -228,6 +247,28 @@ esac
 shift
 done
 
+#######	get new config file for containers
+
+if [ "${EXTERNAL_CONFIG}" == 'true' ];then
+	if [ -e "${CONFIG_FILE}" ];then
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		if [ -n "${UNKNOWN}" ];then
+			 echo "Error in config file. Not allowed lines:"
+			 echo "${UNKNOWN}"
+			 exit 1
+		fi
+		source ./${CONFIG_FILE}
+		echo ""
+		echo "#############################################################################################"
+		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+		echo "##############################################################################################"
+	else
+		echo "${USAGE}"
+		echo "Error Message : External Config file not found at ${CONFIG_FILE}"
+		echo ""
+		exit 1
+	fi
+fi
 
 
 #remove / if needed in INPUT_PATH
@@ -261,7 +302,7 @@ if [ -z "${INDEL1}" ] || [ -z "${INDEL2}" ] || [ -z "${INPUT_PATH}" ] || [ -z "$
 	exit 1
 fi
 
-if [[ "${ANNOTATOR}" != 0 ]] && [[ ! -e "${ANNOTATION_SCRIPT}" ]]; then
+if [ "${ANNOTATOR}" != 0 ] && [ ! -e "${ANNOTATION_SCRIPT}" ]; then
 	echo "#############################################################################################"
 	echo "WARNING : VariantAnnotation - Script ${ANNOTATION_SCRIPT} for ${ANNOTATOR} not found!!!!! - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME} - Please check your -a option"
 	echo "#############################################################################################"
@@ -466,9 +507,9 @@ ckFileSz "${INTERVALS_BED}"
 echo "INTERVALS_BED : ${INTERVALS_BED}"
 
 
-if [ "${HSMETRICS}" == 'true' ]; then
+if [ "${HSMETRICS}" == 'true' ];then
 	PICARD_INTERVALS_FILE=${INPUT_PATH}Picard.intervals.list
-	if [ -e ${INPUT_PATH}Picard.baits.intervals.list ]; then
+	if [ -e ${INPUT_PATH}Picard.baits.intervals.list ];then
 		PICARD_BAIT_INTERVALS_FILE=${INPUT_PATH}Picard.baits.intervals.list
 	else
 		PICARD_BAIT_INTERVALS_FILE=${PICARD_INTERVALS_FILE}
