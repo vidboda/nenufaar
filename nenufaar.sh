@@ -133,7 +133,7 @@ fi
 
 ##############	Is the version suitable?
 
-if [ "${TESTED}" == 'false' ];then
+if [ "${TESTED}" == 'yes' ];then
 	echo ""
 	echo "#############################################################################################"
 	echo "This version has been properly tested - you can use it quite safely"
@@ -247,7 +247,7 @@ esac
 shift
 done
 
-#######	get new config file for containers
+#######	get new config file
 
 if [ "${EXTERNAL_CONFIG}" == 'true' ];then
 	if [ -e "${CONFIG_FILE}" ];then
