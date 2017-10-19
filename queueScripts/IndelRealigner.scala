@@ -18,10 +18,13 @@ class performIndelRealigner extends QScript {
 
 	@Input(doc="List of known indels", shortName="known")
 	var knownIndels: List[File] = Nil
+	
+	@Argument(doc="Number of available cores to define scatterCount", shortName="nbThreads")
+    var nbThreads: Int = _
 
 	def script() {
 		val indelRealigner = new IndelRealigner
-		indelRealigner.scatterCount = 28
+		indelRealigner.scatterCount = nbThreads
 		indelRealigner.reference_sequence = referenceFile
 		indelRealigner.input_file :+= bamFile
 		indelRealigner.targetIntervals = intervalFile

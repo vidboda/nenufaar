@@ -16,12 +16,15 @@ class performDiagnoseTargets extends QScript {
 	var outputFile: File = _
 
 	@Argument(doc="output GATK TEMP directory", shortName="gatkOutputDir")
-        var gatkOutputDir: String = "./"
+    var gatkOutputDir: String = "./"
+		
+	@Argument(doc="Number of available cores to define scatterCount", shortName="nbThreads")
+    var nbThreads: Int = _
 
 	def script() {
 
 		val diagnoseTargets = new DiagnoseTargets
-		diagnoseTargets.scatterCount = 28
+		diagnoseTargets.scatterCount = nbThreads
 		//7 to get 12G per thread for WGS
 		diagnoseTargets.reference_sequence = referenceFile
 		diagnoseTargets.input_file :+= bamFile

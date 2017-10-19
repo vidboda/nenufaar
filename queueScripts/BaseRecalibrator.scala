@@ -19,15 +19,18 @@ class performBaseRecalibration extends QScript {
 	var knownSites: List[File] = Nil
 
 	@Argument(doc="output BAM directory", shortName="outputDir")
-        var outputDir: String = "./"
+    var outputDir: String = "./"
 
 	@Argument(doc="output GATK TEMP directory", shortName="gatkOutputDir")
-        var gatkOutputDir: String = "./"
+    var gatkOutputDir: String = "./"
+		
+	@Argument(doc="Number of available cores to define scatterCount", shortName="nbThreads")
+    var nbThreads: Int = _
 
 	def script() {
 
 		val baseRecalibrator = new BaseRecalibrator
-		baseRecalibrator.scatterCount = 28
+		baseRecalibrator.scatterCount = nbThreads
 		baseRecalibrator.reference_sequence = referenceFile
 		baseRecalibrator.input_file :+= bamFile
 		//baseRecalibrator.intervals = intervalsFile

@@ -130,7 +130,9 @@ The fastQ files must be named as above, e.g. SU2332.R1.fastq.gz
 
 *	-cu, --clean_up	Boolean true, false: set to false to keep intermediate files (for dev purpose)
 
-*	-log,  --log-file	Path to log file
+*	-log, --log-file	Path to log file
+
+*	-cf, --config-file	Provide a config file path, e.g. for containers
 
 ## Tests
 

@@ -20,10 +20,13 @@ class performVariantFiltration extends QScript {
 
 	@Argument(doc="List of Filter Names", shortName="filterName")
 	var filterNames: List[String] = Nil
+	
+	@Argument(doc="Number of available cores to define scatterCount", shortName="nbThreads")
+    var nbThreads: Int = _
 
 	def script() {
 		val variantFiltration = new VariantFiltration
-		variantFiltration.scatterCount = 28
+		variantFiltration.scatterCount = nbThreads
 		variantFiltration.reference_sequence = referenceFile
 		variantFiltration.V = vcfFile
 		variantFiltration.dcov = downCov

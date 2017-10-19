@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.4.2
+VERSION=2.4.3
 TESTED=yes
 USAGE="
 Program: nenufaar
@@ -45,9 +45,10 @@ Options:
     -b,		--bam_only			Only generates BAM files
     -vc		--variant_calling_only		Processes variant calling from a single BAM
     -id,	--processus_id			defines a non-random processus id
-    -l,		--gene_list path to a txt file with a #NAME and a list of genes to be marked in a annovar file
+    -l,		--gene_list 			path to a txt file with a #NAME and a list of genes to be marked in a annovar file
     -cu,	--clean_up			Boolean true, false: set to false to keep intermediate files (for dev purpose)
     -log,	--log-file			Path to log file
+    -cf,	--config-file			Provide a config file path, e.g. for containers
 
 
  Docs:
@@ -113,22 +114,36 @@ fi
 CONFIG_FILE=nenufaar.conf
 
 #we check params against regexp
-
-UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
-if [ -n "${UNKNOWN}" ]; then
-	 echo "Error in config file. Not allowed lines:"
-	 echo "${UNKNOWN}"
-	 exit 1
+if [ -e "${CONFIG_FILE}" ];then
+	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+	if [ -n "${UNKNOWN}" ]; then
+		 echo "Error in config file. Not allowed lines:"
+		 echo "${UNKNOWN}"
+		 exit 1
+	fi
+	source ./${CONFIG_FILE}	
+	echo ""
+	echo "#############################################################################################"
+	echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
+	echo "##############################################################################################"
+else
+	EXTERNAL_CONFIG="true"
 fi
 
-source ./${CONFIG_FILE}
 
-echo ""
-echo "#############################################################################################"
-echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
-echo "##############################################################################################"
+##############	Is the version suitable?
 
-#source nenufaar.conf
+if [ "${TESTED}" == 'yes' ];then
+	echo ""
+	echo "#############################################################################################"
+	echo "This version has been properly tested - you can use it quite safely"
+	echo "##############################################################################################"
+else
+	echo ""
+	echo "#############################################################################################"
+	echo "This development version has not been properly tested - you can use it at your own risk"
+	echo "##############################################################################################"
+fi
 
 ###############		Get arguments from command line			#################################
 
@@ -216,6 +231,10 @@ case "${KEY}" in
 	LOG_FILE="$2"
 	shift
 	;;
+	-cf|--config-file)
+	CONFIG_FILE="$2"
+	shift
+	;;
 	-h|--help)
 	echo "${USAGE}"
 	exit 1
@@ -228,6 +247,28 @@ esac
 shift
 done
 
+#######	get new config file
+
+if [ "${EXTERNAL_CONFIG}" == 'true' ];then
+	if [ -e "${CONFIG_FILE}" ];then
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		if [ -n "${UNKNOWN}" ];then
+			 echo "Error in config file. Not allowed lines:"
+			 echo "${UNKNOWN}"
+			 exit 1
+		fi
+		source ./${CONFIG_FILE}
+		echo ""
+		echo "#############################################################################################"
+		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+		echo "##############################################################################################"
+	else
+		echo "${USAGE}"
+		echo "Error Message : External Config file not found at ${CONFIG_FILE}"
+		echo ""
+		exit 1
+	fi
+fi
 
 
 #remove / if needed in INPUT_PATH
@@ -261,7 +302,7 @@ if [ -z "${INDEL1}" ] || [ -z "${INDEL2}" ] || [ -z "${INPUT_PATH}" ] || [ -z "$
 	exit 1
 fi
 
-if [[ "${ANNOTATOR}" != 0 ]] && [[ ! -e "${ANNOTATION_SCRIPT}" ]]; then
+if [ "${ANNOTATOR}" != 0 ] && [ ! -e "${ANNOTATION_SCRIPT}" ]; then
 	echo "#############################################################################################"
 	echo "WARNING : VariantAnnotation - Script ${ANNOTATION_SCRIPT} for ${ANNOTATOR} not found!!!!! - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME} - Please check your -a option"
 	echo "#############################################################################################"
@@ -466,9 +507,9 @@ ckFileSz "${INTERVALS_BED}"
 echo "INTERVALS_BED : ${INTERVALS_BED}"
 
 
-if [ "${HSMETRICS}" == 'true' ]; then
+if [ "${HSMETRICS}" == 'true' ];then
 	PICARD_INTERVALS_FILE=${INPUT_PATH}Picard.intervals.list
-	if [ -e ${INPUT_PATH}Picard.baits.intervals.list ]; then
+	if [ -e ${INPUT_PATH}Picard.baits.intervals.list ];then
 		PICARD_BAIT_INTERVALS_FILE=${INPUT_PATH}Picard.baits.intervals.list
 	else
 		PICARD_BAIT_INTERVALS_FILE=${PICARD_INTERVALS_FILE}
@@ -640,10 +681,10 @@ do
 	
 					echo "#############################################################################################"
 					echo "GATK : IndelRealigner using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-					echo "COMMAND: ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+					echo "COMMAND: ${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
 					echo "#############################################################################################"
 	
-					${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+					${JAVA7} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE_OLD} -l WARN -S ${SCALA_PATH}IndelRealigner.scala -I ${BAM} -R ${REF_PATH} -known ${INDEL1} -known ${INDEL2} -targetIntervals ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}.intervals -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
 	
 					ckRes $? "GATK IndelRealigner "
 					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.bam"
@@ -662,10 +703,10 @@ do
 				#fi
 				echo "#############################################################################################"
 				echo "GATK : BaseRecalibrator and PrintReads using Queue - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run"
+				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run"
 				echo "#############################################################################################"
 	
-				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run
+				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}BaseRecalibrator.scala -I ${BAM} -R ${REF_PATH} -knownSites ${INDEL1} -knownSites ${INDEL2} -knownSites ${SNP_PATH} -L ${INTERVALS_FILE} -outputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/  -disableJobReport -run
 				# -disableJobReport#-jobNative "-cwd  ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/"
 	
 				ckRes $? "GATK BaseRecalibrator "
@@ -709,10 +750,10 @@ do
 			
 				echo "#############################################################################################"
 				echo "GATK : DiagnoseTargets using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
 				echo "#############################################################################################"
 	
-				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}DiagnoseTargets.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf -gatkOutputDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/ -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
 	
 				ckRes $? "GATK DiagnoseTargets "
 				ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK/${CURRENT_SAMPLE_BASEDIR_NAME}_DT.vcf"
@@ -783,12 +824,13 @@ do
 			elif [ "${CALLER}" == 'hc' ]; then
 				echo "#############################################################################################"
 				echo "GATK : HaplotypeCaller using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}HaplotypeCaller.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -A ReadPosRankSumTest -stand_call_conf ${STAND_CALL_CONF} -stand_emit_conf ${STAND_EMIT_CONF} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+				echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}HaplotypeCaller.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -A ReadPosRankSumTest -stand_call_conf ${STAND_CALL_CONF} -stand_emit_conf ${STAND_EMIT_CONF} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
 				echo "#############################################################################################"
 
-				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}HaplotypeCaller.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -A ReadPosRankSumTest -stand_call_conf ${STAND_CALL_CONF} -stand_emit_conf ${STAND_EMIT_CONF} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+				${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}HaplotypeCaller.scala -I ${BAM} -R ${REF_PATH} ${INTERVALS_FILE_OPTION} -D ${SNP_PATH} -A ReadPosRankSumTest -stand_call_conf ${STAND_CALL_CONF} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
 
 				ckRes $? "GATK : HaplotypeCaller  "
+				#-stand_emit_conf ${STAND_EMIT_CONF} removed in GATK 3.8
 			fi
 			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.vcf"
 
@@ -807,11 +849,11 @@ do
 
 			echo "#############################################################################################"
 			echo "GATK : VariantFiltration using Queue - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}VariantFiltration.scala -V ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf -R ${REF_PATH} -dcov ${DCOV} -filterExpression \"DP < ${DP_THRESHOLD}\" -filterName \"LowCoverage\" -filterExpression \"QUAL < 30.0\" -filterName \"LowQual\" -filterExpression \"QD < 1.5\" -filterName \"LowQD\" -filterExpression \"FS > 60.000\" -filterName \"StrandBias\" -filterExpression \"MQ < 10.00\" -filterName \"LowMappingQuality\" -filterExpression \"POLYX > 7\" -filterName \"R8\" ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
+			echo "COMMAND: ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}VariantFiltration.scala -V ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf -R ${REF_PATH} -dcov ${DCOV} -filterExpression \"DP < ${DP_THRESHOLD}\" -filterName \"LowCoverage\" -filterExpression \"QUAL < 30.0\" -filterName \"LowQual\" -filterExpression \"QD < 1.5\" -filterName \"LowQD\" -filterExpression \"FS > 60.000\" -filterName \"StrandBias\" -filterExpression \"MQ < 10.00\" -filterName \"LowMappingQuality\" -filterExpression \"POLYX > 7\" -filterName \"R8\" -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run"
 			echo "#############################################################################################"
 			echo "DP Threshold used for LowCoverage: ${DP_THRESHOLD}"
 
-			${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}VariantFiltration.scala -V ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf -R ${REF_PATH} -dcov ${DCOV} -filterExpression "DP < ${DP_THRESHOLD}" -filterName "LowCoverage" -filterExpression "QUAL < 30.0" -filterName "LowQual" -filterExpression "QD < 1.5" -filterName "LowQD" -filterExpression "FS > 60.000" -filterName "StrandBias" -filterExpression "MQ < 10.00" -filterName "LowMappingQuality" -filterExpression "POLYX > 7" -filterName "R8" ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
+			${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_QUEUE -Xmx${MAX_RAM}g ${QUEUE} -l WARN -S ${SCALA_PATH}VariantFiltration.scala -V ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.vcf -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf -R ${REF_PATH} -dcov ${DCOV} -filterExpression "DP < ${DP_THRESHOLD}" -filterName "LowCoverage" -filterExpression "QUAL < 30.0" -filterName "LowQual" -filterExpression "QD < 1.5" -filterName "LowQD" -filterExpression "FS > 60.000" -filterName "StrandBias" -filterExpression "MQ < 10.00" -filterName "LowMappingQuality" -filterExpression "POLYX > 7" -filterName "R8" -nbThreads ${NB_THREAD} ${QUEUE_RUNNER} -jobSGDir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_DRMAA/ -disableJobReport -run
 
 			ckRes $? "GATK : VariantFiltration  "
 			ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.raw.polyx.gatk.vcf"
