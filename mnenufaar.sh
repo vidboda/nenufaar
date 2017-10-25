@@ -111,7 +111,7 @@ else
 	EXTERNAL_CONFIG="true"
 fi
 
-source ./${CONFIG_FILE}
+#source ./${CONFIG_FILE}
 
 
 
