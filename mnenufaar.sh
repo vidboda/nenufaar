@@ -95,12 +95,20 @@ fi
 CONFIG_FILE=mnenufaar.conf
 
 #we check params against regexp
-
-UNKNOWN=`cat ${CONFIG_FILE} | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ \.\/\$\{\}\(\)\"\'=-]*)$"`
-if [ -n "${UNKNOWN}" ]; then
-	echo "Error in config file. Not allowed lines:"
-	echo ${UNKNOWN}
-	exit 1
+if [ -e "${CONFIG_FILE}" ];then
+	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+	if [ -n "${UNKNOWN}" ]; then
+		 echo "Error in config file. Not allowed lines:"
+		 echo "${UNKNOWN}"
+		 exit 1
+	fi
+	source ./${CONFIG_FILE}	
+	echo ""
+	echo "#############################################################################################"
+	echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
+	echo "##############################################################################################"
+else
+	EXTERNAL_CONFIG="true"
 fi
 
 source ./${CONFIG_FILE}
@@ -185,6 +193,10 @@ case "${KEY}" in
 	LOG_FILE="$2"
 	shift
 	;;
+	-cf|--config-file)
+	CONFIG_FILE="$2"
+	shift
+	;;
 	*)
 	echo "Error Message : Unknown option ${KEY}" 	# unknown option
 	exit
@@ -198,7 +210,28 @@ if [ ${#LOG_FILE} -eq 0 ];then
 	LOG_FILE="${OUTPUT_PATH}mnenufaar_${ID}.log"
 fi
 
+#######	get new config file
 
+if [ "${EXTERNAL_CONFIG}" == 'true' ];then
+	if [ -e "${CONFIG_FILE}" ];then
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		if [ -n "${UNKNOWN}" ];then
+			 echo "Error in config file. Not allowed lines:"
+			 echo "${UNKNOWN}"
+			 exit 1
+		fi
+		source ./${CONFIG_FILE}
+		echo ""
+		echo "#############################################################################################"
+		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+		echo "##############################################################################################"
+	else
+		echo "${USAGE}"
+		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
+		echo ""
+		exit 1
+	fi
+fi
 
 
 echo ""
@@ -209,11 +242,6 @@ echo "##########################################################################
 touch ${LOG_FILE}
 exec &>${LOG_FILE}
 
-
-echo ""
-echo "#############################################################################################"
-echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
-echo "##############################################################################################"
 
 ########	add / to INPUT_PATH if needed
 if [[ "${INPUT_PATH}" =~ .+[^\/]$ ]];then
@@ -299,9 +327,9 @@ ckFileSz() {
 ###
 
 
-echo "COMMAND: nohup ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
+echo "COMMAND: ${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
 
-nohup ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b
+${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -cf ${NENUFAAR_CONF_FILE} -b
 
 #I often have an error wifth a fi at the end of nenufaar script, so commented until fixed
 STATUS=$?
@@ -359,9 +387,9 @@ rm ${BAIS_FILES[@]}
 ###nenufaar generate single VCF for all samples
 ###
 
-echo "COMMAND: nohup ${SHELL} nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
+echo "COMMAND: ${NOHUP} ${SHELL} nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
 
-nohup ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc
+${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} -cf ${NENUFAAR_CONF_FILE} ${LIST} -vc
 
 STATUS=$?
 if [ "${STATUS}" -ne '0' ];then
