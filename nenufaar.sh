@@ -326,7 +326,7 @@ if [ "${LIST}" != '' ]; then
 	LIST="-l ${LIST}"
 fi
 
-if [ -z "${JAVA7}" ] || [ -z "${JAVA}" ] || [ -z "${LD_LIBRARY_PATH}" ] || [ -z "${PYTHON}" ] || [ -z "${PERL}" ] || [ -z "${BASH}" ]|| [ -z "${PERL}" ] || [ -z "${AWK}" ] || [ -z "${SORT}" ] || [ -z "${BWA}" ] || [ -z "${FASTQC}" ] || [ -z "${SAMTOOLS}" ] || [ -z "${PICARD}" ] || [ -z "${GATK}" ] || [ -z "${PLATYPUS}" ] || [ -z "${ANNOTATION_SCRIPT}" ] || [ -z "${VCF_POLYX}" ] || [ -z "${QUEUE}" ] || [ -z "${SAMBAMBA}" ] || [ -z "${HTSLIB}" ] || [ -z "${BEDTOOLS}" ] || [ -z "${IURC_VCF_AB}" ]; then
+if [ -z "${JAVA7}" ] || [ -z "${JAVA}" ] || [ -z "${LD_LIBRARY_PATH}" ] || [ -z "${PYTHON}" ] || [ -z "${PERL}" ] || [ -z "${BASH}" ]|| [ -z "${AWK}" ] || [ -z "${SORT}" ] || [ -z "${BWA}" ] || [ -z "${FASTQC}" ] || [ -z "${SAMTOOLS}" ] || [ -z "${PICARD}" ] || [ -z "${GATK}" ] || [ -z "${PLATYPUS}" ] || [ -z "${ANNOTATION_SCRIPT}" ] || [ -z "${VCF_POLYX}" ] || [ -z "${QUEUE}" ] || [ -z "${SAMBAMBA}" ] || [ -z "${HTSLIB}" ] || [ -z "${BEDTOOLS}" ] || [ -z "${IURC_VCF_AB}" ]; then
 	echo 'Error Message : Mandatory software missing -> see help (-h) or conf file'
 	exit 1
 fi
