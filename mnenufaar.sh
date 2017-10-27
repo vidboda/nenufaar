@@ -9,7 +9,7 @@
 ###########################################################################
 
 
-VERSION=0.1.1
+VERSION=0.1.2
 USAGE="
 Program: mnenufaar
 Version: ${VERSION}
@@ -94,13 +94,16 @@ fi
 
 CONFIG_FILE=mnenufaar.conf
 
+#needed as we may parse twice
+SAVED_ARGS=( "$@" );
+
 #we check params against regexp
 if [ -e "${CONFIG_FILE}" ];then
 	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
 	if [ -n "${UNKNOWN}" ]; then
-		 echo "Error in config file. Not allowed lines:"
-		 echo "${UNKNOWN}"
-		 exit 1
+		echo "Error in config file. Not allowed lines:"
+		echo "${UNKNOWN}"
+		exit 1
 	fi
 	source ./${CONFIG_FILE}	
 	echo ""
@@ -108,12 +111,40 @@ if [ -e "${CONFIG_FILE}" ];then
 	echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
 	echo "##############################################################################################"
 else
-	EXTERNAL_CONFIG="true"
+	#EXTERNAL_CONFIG='true'
+	while [[ "$#" -gt 0 ]]
+	do
+	KEY="$1"
+	case "${KEY}" in
+			-cf|--config-file)
+			CONFIG_FILE="$2"
+			;;
+	esac
+	shift
+	done
+	if [ -e "${CONFIG_FILE}" ];then
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		if [ -n "${UNKNOWN}" ];then
+			echo "Error in config file. Not allowed lines:"
+			echo "${UNKNOWN}"
+			exit 1
+		fi
+		source ./${CONFIG_FILE}
+		echo ""
+		echo "#############################################################################################"
+		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+		echo "##############################################################################################"
+	else
+		echo "${USAGE}"
+		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
+		echo ""
+		exit 1
+	fi
 fi
 
 #source ./${CONFIG_FILE}
-
-
+#restore arguments
+set -- "${SAVED_ARGS[@]}";
 
 ###############		Get arguments from command line			#################################
 
@@ -212,26 +243,26 @@ fi
 
 #######	get new config file
 
-if [ "${EXTERNAL_CONFIG}" == 'true' ];then
-	if [ -e "${CONFIG_FILE}" ];then
-		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
-		if [ -n "${UNKNOWN}" ];then
-			 echo "Error in config file. Not allowed lines:"
-			 echo "${UNKNOWN}"
-			 exit 1
-		fi
-		source ./${CONFIG_FILE}
-		echo ""
-		echo "#############################################################################################"
-		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
-		echo "##############################################################################################"
-	else
-		echo "${USAGE}"
-		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
-		echo ""
-		exit 1
-	fi
-fi
+#if [ "${EXTERNAL_CONFIG}" == 'true' ];then
+#	if [ -e "${CONFIG_FILE}" ];then
+#		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+#		if [ -n "${UNKNOWN}" ];then
+#			 echo "Error in config file. Not allowed lines:"
+#			 echo "${UNKNOWN}"
+#			 exit 1
+#		fi
+#		source ./${CONFIG_FILE}
+#		echo ""
+#		echo "#############################################################################################"
+#		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+#		echo "##############################################################################################"
+#	else
+#		echo "${USAGE}"
+#		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
+#		echo ""
+#		exit 1
+#	fi
+#fi
 
 
 echo ""
@@ -329,9 +360,9 @@ ckFileSz() {
 
 echo "COMMAND: ${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b "
 
-${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -cf ${NENUFAAR_CONF_FILE} -b
+${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -id ${ID} -b
 
-#I often have an error wifth a fi at the end of nenufaar script, so commented until fixed
+# -cf ${NENUFAAR_CONF_FILE}
 STATUS=$?
 if [ "${STATUS}" -ne 0 ];then
 	echo "###########################################################################"
@@ -389,8 +420,8 @@ rm ${BAIS_FILES[@]}
 
 echo "COMMAND: ${NOHUP} ${SHELL} nenufaar.sh -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc"
 
-${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} -cf ${NENUFAAR_CONF_FILE} ${LIST} -vc
-
+${NOHUP} ${SHELL} ${NENUFAAR} -i ${INPUT_PATH} -o ${OUTPUT_PATH} -r ${REF_PATH} -snp ${SNP_PATH} -indel1 ${INDEL1} -indel2 ${INDEL2} -g ${GENOME} -dcov ${DCOV} -c ${CALLER} -p ${PROTOCOL} -hsm ${HSMETRICS} -a ${ANNOTATOR} -f ${FILTER} -up ${USE_PLATYPUS} ${LIST} -vc
+# -cf ${NENUFAAR_CONF_FILE}
 STATUS=$?
 if [ "${STATUS}" -ne '0' ];then
 	echo "###########################################################################"

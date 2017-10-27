@@ -10,8 +10,8 @@
 ###########################################################################
 
 
-VERSION=2.4.3
-TESTED=yes
+VERSION=2.4.4
+TESTED=no
 USAGE="
 Program: nenufaar
 Version: ${VERSION}
@@ -113,6 +113,9 @@ fi
 
 CONFIG_FILE=nenufaar.conf
 
+#needed as we may parse twice
+SAVED_ARGS=( "$@" );
+
 #we check params against regexp
 if [ -e "${CONFIG_FILE}" ];then
 	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
@@ -127,9 +130,39 @@ if [ -e "${CONFIG_FILE}" ];then
 	echo "Config File ${CONFIG_FILE} successfully loaded - `date`"
 	echo "##############################################################################################"
 else
-	EXTERNAL_CONFIG="true"
+	#EXTERNAL_CONFIG="true"
+	while [[ "$#" -gt 0 ]]
+	do
+	KEY="$1"
+	case "${KEY}" in
+			-cf|--config-file)
+			CONFIG_FILE="$2"
+			;;
+	esac
+	shift
+	done
+	if [ -e "${CONFIG_FILE}" ];then
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		if [ -n "${UNKNOWN}" ];then
+			echo "Error in config file. Not allowed lines:"
+			echo "${UNKNOWN}"
+			exit 1
+		fi
+		source ./${CONFIG_FILE}
+		echo ""
+		echo "#############################################################################################"
+		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+		echo "##############################################################################################"
+	else
+		echo "${USAGE}"
+		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
+		echo ""
+		exit 1
+	fi
 fi
 
+#restore arguments
+set -- "${SAVED_ARGS[@]}";
 
 ##############	Is the version suitable?
 
@@ -249,26 +282,26 @@ done
 
 #######	get new config file
 
-if [ "${EXTERNAL_CONFIG}" == 'true' ];then
-	if [ -e "${CONFIG_FILE}" ];then
-		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
-		if [ -n "${UNKNOWN}" ];then
-			 echo "Error in config file. Not allowed lines:"
-			 echo "${UNKNOWN}"
-			 exit 1
-		fi
-		source ./${CONFIG_FILE}
-		echo ""
-		echo "#############################################################################################"
-		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
-		echo "##############################################################################################"
-	else
-		echo "${USAGE}"
-		echo "Error Message : External Config file not found at ${CONFIG_FILE}"
-		echo ""
-		exit 1
-	fi
-fi
+#if [ "${EXTERNAL_CONFIG}" == 'true' ];then
+#	if [ -e "${CONFIG_FILE}" ];then
+#		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+#		if [ -n "${UNKNOWN}" ];then
+#			 echo "Error in config file. Not allowed lines:"
+#			 echo "${UNKNOWN}"
+#			 exit 1
+#		fi
+#		source ./${CONFIG_FILE}
+#		echo ""
+#		echo "#############################################################################################"
+#		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
+#		echo "##############################################################################################"
+#	else
+#		echo "${USAGE}"
+#		echo "Error Message : External Config file not found at ${CONFIG_FILE}"
+#		echo ""
+#		exit 1
+#	fi
+#fi
 
 
 #remove / if needed in INPUT_PATH
