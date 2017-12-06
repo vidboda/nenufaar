@@ -155,7 +155,7 @@ else
 		echo "##############################################################################################"
 	else
 		echo "${USAGE}"
-		echo "Error Message : External mnenufaar Config file not found at ${CONFIG_FILE}"
+		echo "Error Message : External nenufaar Config file not found at ${CONFIG_FILE}"
 		echo ""
 		exit 1
 	fi
