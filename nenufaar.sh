@@ -148,7 +148,7 @@ else
 			echo "${UNKNOWN}"
 			exit 1
 		fi
-		source ./${CONFIG_FILE}
+		source ${CONFIG_FILE}
 		echo ""
 		echo "#############################################################################################"
 		echo "External Config File ${CONFIG_FILE} successfully loaded - `date`"
