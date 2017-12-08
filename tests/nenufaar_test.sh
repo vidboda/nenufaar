@@ -34,7 +34,7 @@ shift
 done
 mkdir tests/logs/nenufaar/${VERSION}/
 touch tests/logs/nenufaar/${VERSION}/SUMMARY.log
-sh nenufaar.sh -i input/tests/MiniFastqTest/ -hsm true -up false -p wgs -log tests/logs/nenufaar/${VERSION}/${VERSION}.wgs.log -cu false
+sh nenufaar.sh -i input/tests/MiniFastqTest/ -up false -p wgs -log tests/logs/nenufaar/${VERSION}/${VERSION}.wgs.log -cu false
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
 	echo "Test WGS OK on ${HOSTNAME}" > tests/logs/nenufaar/${VERSION}/SUMMARY.log
