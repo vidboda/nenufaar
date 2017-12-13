@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.4.4
+VERSION=2.4.5
 TESTED=yes
 USAGE="
 Program: nenufaar
@@ -118,7 +118,7 @@ SAVED_ARGS=( "$@" );
 
 #we check params against regexp
 if [ -e "${CONFIG_FILE}" ];then
-	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+	UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*|module load [a-zA-Z-]*)$")
 	if [ -n "${UNKNOWN}" ]; then
 		 echo "Error in config file. Not allowed lines:"
 		 echo "${UNKNOWN}"
@@ -142,7 +142,7 @@ else
 	shift
 	done
 	if [ -e "${CONFIG_FILE}" ];then
-		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*)$")
+		UNKNOWN=$(cat ${CONFIG_FILE}  | grep -Evi "^(#.*|[A-Z0-9_]*=[a-z0-9_ :\.\/\$\{\}\(\)\"=-]*|echo[ \"#a-zA-Z_:\$\{\}]*|export[ a-zA-Z0-9_:\/\.=\$\{\}-]*|module load [a-zA-Z-]*)$")
 		if [ -n "${UNKNOWN}" ];then
 			echo "Error in config file. Not allowed lines:"
 			echo "${UNKNOWN}"
@@ -825,6 +825,20 @@ do
 	
 					ckRes $? "Picard HsMetrics "
 					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/HsMetrics.tsv"
+					
+					#####
+					##### added Picard CollectInsertSizeMetrics to get info on on target
+					#####
+					
+					echo "#############################################################################################"
+					echo "Picard : CollectInsertSizeMetrics - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+					echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectInsertSizeMetrics INPUT=${BAM} HISTOGRAM_FILE=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/InsertSizeHist.pdf OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/InsertSizeMetrics.tsv TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD"
+					echo "#############################################################################################"
+					
+					${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Xmx${PICARD_RAM}g ${PICARD} CollectInsertSizeMetrics INPUT=${BAM} HISTOGRAM_FILE=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/InsertSizeHist.pdf OUTPUT=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/InsertSizeMetrics.tsv TMP_DIR=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD
+					
+					ckRes $? "Picard CollectInsertSizeMetrics "
+					ckFileSz "${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_PICARD/InsertSizeMetrics.tsv"	
 				fi
 			else
 				mv ${BAM} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.sorted.dupMarked.realigned.recalibrated.compressed.bam
