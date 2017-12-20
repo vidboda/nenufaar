@@ -42,13 +42,20 @@ if [ "${STATUS}" -eq 0 ];then
 else
 	echo "Test annovar hg19 NOT OK on ${HOSTNAME} - check: tail -30 tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg19.annovar.log" > tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
 fi
-bash nenufaar_annot.sh -i input/tests/MiniFastq_vcf/ -o tests/vcf/${VERSION}/ -a annovar -log tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg38.annovar.log -g hg38
+bash nenufaar_annot.sh -i input/tests/MiniFastq_vcf/ -o tests/vcf/${VERSION}/ -a cava -log tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg19.annovar.log -g hg19
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then
-	echo "Test annovar hg38 OK on ${HOSTNAME}" >> tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
+	echo "Test cava hg19 OK on ${HOSTNAME}" > tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
 else
-	echo "Test annovar hg38 NOT OK on ${HOSTNAME} - check: tail -30 tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg38.annovar.log" > tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
+	echo "Test cava hg19 NOT OK on ${HOSTNAME} - check: tail -30 tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg19.annovar.log" > tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
 fi
+#bash nenufaar_annot.sh -i input/tests/MiniFastq_vcf/ -o tests/vcf/${VERSION}/ -a annovar -log tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg38.annovar.log -g hg38
+#STATUS=$?
+#if [ "${STATUS}" -eq 0 ];then
+#	echo "Test annovar hg38 OK on ${HOSTNAME}" >> tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
+#else
+#	echo "Test annovar hg38 NOT OK on ${HOSTNAME} - check: tail -30 tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg38.annovar.log" > tests/logs/nenufaar_annot/${VERSION}/SUMMARY.log
+#fi
 bash nenufaar_annot.sh -i input/tests/MiniFastq_vcf/ -o tests/vcf/${VERSION}/ -a annovar -f true -log tests/logs/nenufaar_annot/${VERSION}/${VERSION}.hg19.filtered.annovar.log -g hg19
 STATUS=$?
 if [ "${STATUS}" -eq 0 ];then

@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 
 ###########################################################################
 #########							###########
@@ -9,7 +9,7 @@
 ###########################################################################
 
 
-VERSION=1.6.1
+VERSION=1.6.2
 USAGE="
 Program: nenufaar_annot
 Version: ${VERSION}
@@ -294,17 +294,31 @@ do
 	if [ "${ANNOTATOR}" != 0 ]; then
 		#if [ "${ANNOTATOR}" == 'annovar' ] || [ "${ANNOTATOR}" == 'merge' ]; then
 		if [ "${ANNOTATOR}" == 'annovar' ] && [ "${MULTISAMPLE}" == 'false' ]; then
+			#echo "#############################################################################################"
+			#echo "BCFTOOLS : pre-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+			#echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf"
+			#echo "#############################################################################################"
+			##we pre-process vcf for annovar (split multi-alleles and left normalisation of indels)
+			##http://annovar.openbioinformatics.org/en/latest/articles/VCF/
+			#
+			#${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+			#ckRes $? "BCFTOOLS : pre-processing of VCF "
+			#ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+			#VCF=${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+			
+			
 			echo "#############################################################################################"
 			echo "BCFTOOLS : pre-processing of VCF - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
-			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${INPUT_PATH}${SAMPLE_FILE}.norm.vcf"
+			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both -f ${REF_PATH} --threads ${NB_THREADS} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf ${INPUT_PATH}${SAMPLE_FILE}"
 			echo "#############################################################################################"
 			#we pre-process vcf for annovar (split multi-alleles and left normalisation of indels)
 			#http://annovar.openbioinformatics.org/en/latest/articles/VCF/
 			
-			${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both ${INPUT_PATH}${SAMPLE_FILE} | ${BCFTOOLS} norm -f ${REF_PATH} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+			${SRUN_SIMPLE_COMMAND} ${BCFTOOLS} norm -m-both -f ${REF_PATH} --threads ${NB_THREAD} -o ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf ${INPUT_PATH}${SAMPLE_FILE}
 			ckRes $? "BCFTOOLS : pre-processing of VCF "
 			ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
-			VCF=${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf
+			VCF=${OUTPUT_PATH}${SAMPLE_FILE}.norm.vcf			
+			
 		elif [ "${MULTISAMPLE}" == 'true' ];then
 			VCF=${INPUT_PATH}${SAMPLE_FILE}
 		fi
@@ -321,6 +335,16 @@ do
 			ckRes $? "CAVA : Clinical Annotation of VAriants "
 			ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.cava.txt
 			TXT_FILE=${OUTPUT_PATH}${SAMPLE_FILE}.cava.txt
+			
+			echo "#############################################################################################"
+			echo "CAVA : VCF Clinical Annotation of VAriants - `date` ID_ANALYSE : ${ID}  - SAMPLE : ${SAMPLE_FILE}"
+			echo "COMMAND: ${SRUN_24_COMMAND} ${PYTHON} ${CAVA} -c ${CAVA_DIR}config_vcf.txt -i ${INPUT_PATH}${SAMPLE_FILE} -o ${OUTPUT_PATH}${SAMPLE_FILE}.cava"
+			echo "#############################################################################################"
+
+			${SRUN_24_COMMAND} ${PYTHON} ${CAVA} -c ${CAVA_DIR}config_vcf.txt -i ${INPUT_PATH}${SAMPLE_FILE} -o ${OUTPUT_PATH}${SAMPLE_FILE}.cava
+
+			ckRes $? "CAVA : Clinical Annotation of VAriants "
+			ckFileSz ${OUTPUT_PATH}${SAMPLE_FILE}.cava.vcf			
 		;;
 		"annovar")
 			if [ "${FILTER}" == 'true' ];then
@@ -557,7 +581,6 @@ do
 		fi
 	fi
 done
-
 
 DATE2=$(date +"%s")
 DIFF=$((${DATE2}-${DATE1}))
