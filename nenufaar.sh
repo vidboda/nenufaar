@@ -774,12 +774,12 @@ do
 				#to do queue NO DepthOfCoverage PartitionType.NONE http://gatkforums.broadinstitute.org/wdl/discussion/1310/pipelining-the-gatk-with-queuecannot be split
 				echo "#############################################################################################"
 				echo "GATK : DepthOfCoverage - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC"
+				echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput -mmq ${GATK_DOC_MMQ} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC"
 				echo "#############################################################################################"
 	
 				#https://software.broadinstitute.org/gatk/blog?id=2330 nt works with -omitIntervalsStatistics which is the interesting part
 				#${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T DepthOfCoverage -nt ${NB_THREAD} -R ${REF_PATH} -I ${BAM} -omitBaseOutput  -L ${INTERVALS_FILE} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
-				${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
+				${SRUN_SIMPLE_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM_GATK_SINGLE}g ${GATK} -T DepthOfCoverage -R ${REF_PATH} -I ${BAM} -omitBaseOutput -mmq ${GATK_DOC_MMQ} ${INTERVALS_FILE_OPTION} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_DoC
 
 			
 				echo "#############################################################################################"
@@ -808,7 +808,7 @@ do
 					echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
 					echo "#############################################################################################"
 					
-					${SRUN_24_COMMAND} ${QUALIMAP} bamqc -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
+					${SRUN_24_COMMAND} ${QUALIMAP} bamqc --java-mem-size ${MAX_RAM} -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
 				
 				fi
 			
