@@ -42,7 +42,7 @@ class performBaseRecalibration extends QScript {
 		baseRecalibrator.out = new File(gatkOutputDir + swapExt(bamFile, "sorted.dupMarked.realigned.bam", "recal.table"))
 
 		val printReads = new PrintReads
-		printReads.scatterCount = 28
+		printReads.scatterCount = nbThreads
 		printReads.reference_sequence = referenceFile
 		printReads.input_file :+= bamFile
 		printReads.BQSR = baseRecalibrator.out
