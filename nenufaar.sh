@@ -805,10 +805,10 @@ do
 				if [ "${#QUALIMAP}" -ne 0 ]; then			
 					echo "#############################################################################################"
 					echo "QUALIMAP : bamqc - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-					echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc  --java-mem-size ${MAX_RAM}G -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
+					echo "COMMAND: ${SRUN_24_COMMAND} ${QUALIMAP} bamqc  --java-mem-size=${MAX_RAM}G -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd"
 					echo "#############################################################################################"
 					
-					${SRUN_24_COMMAND} ${QUALIMAP} bamqc --java-mem-size ${MAX_RAM}G -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
+					${SRUN_24_COMMAND} ${QUALIMAP} bamqc --java-mem-size=${MAX_RAM}G -bam ${BAM} -outdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -c --feature-file ${INTERVALS_BED} -nt ${NB_THREAD} -sd
 				
 				fi
 			
