@@ -1023,7 +1023,7 @@ do
 		fi
 
 		# ANNOTATION ---- ANNOTATION PASSED TO OTHER SCRIPT nenufaar_annot_version.sh
-		if [ "${ANNOTATOR}" == 'annovar' ]; then
+		if [ "${ANNOTATOR}" == 'annovar' ];then
 			echo "#############################################################################################"
 			echo "NENUFAAR : ANNOTATION MODULE - `date` ID_ANALYSE : ${ID}  - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
 			echo "COMMAND: ${BASH} ${ANNOTATION_SCRIPT} -a ${ANNOTATOR} -i ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/ -g ${GENOME} -f ${FILTER} ${LIST} ${MULTISAMPLE}"
