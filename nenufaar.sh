@@ -10,7 +10,7 @@
 ###########################################################################
 
 
-VERSION=2.4.5
+VERSION=2.4.6
 TESTED=yes
 USAGE="
 Program: nenufaar
@@ -700,6 +700,13 @@ do
 			${SRUN_SIMPLE_COMMAND} ${BEDTOOLS} genomecov -ibam ${BAM} -bga | ${AWK} -v low_coverage="${BEDTOOLS_LOW_COVERAGE}" '$4<low_coverage' | ${BEDTOOLS} intersect -a ${INTERVALS_BED} -b - | ${SORT} -k1,1 -k2,2n -k3,3n | ${BEDTOOLS} merge -c 4 -o distinct -i - | ${AWK} -v small_intervall="${BEDTOOLS_SMALL_INTERVALS}" 'BEGIN {OFS="\t";print "#chr\tstart\tend\tregion\tsize (bp)\ttype\tUCSC link"} {a=($3-$2+1);if(a<small_intervall) {b="SMALL_INTERVAL"} else {b="OTHER"};url="http://genome-euro.ucsc.edu/cgi-bin/hgTracks?db='${GENOME}'&position="$1":"$2-10"-"$3+10"&highlight='${GENOME}'."$1":"$2"-"$3;print $0, a, b, url}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_poor_coverage.txt
 			#takes ~2 minutes on 1,2G bam and 10 minutes on 7,7G bam
 			
+			echo "#############################################################################################"
+			echo "SAMTOOLS & AWK Calculate coverage per regions - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
+			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS=\"\t\"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,\"+\"}'  | ${AWK} 'BEGIN{FS=\",\";OFS=\"\t\"}{print $1,\"+\" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv"
+			echo "#############################################################################################"
+
+			${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+"}'  | ${AWK} 'BEGIN{FS=",";OFS="\t"}{print $1,"+" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
+			mv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
 			
 			if [ "${PROTOCOL}" != 'wgs' ];then
 				if [ "${CALLER}" == 'ug' ]; then
