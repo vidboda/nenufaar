@@ -538,6 +538,8 @@ mv ${INPUT_PATH}Intervals.sorted.bed ${INPUT_PATH}Intervals.bed
 INTERVALS_BED=${INPUT_PATH}Intervals.bed
 ckFileSz "${INTERVALS_BED}"
 echo "INTERVALS_BED : ${INTERVALS_BED}"
+#put Intervals file in output
+cp ${INTERVALS_BED} ${OUTPUT_PATH}${RUN_BASEDIR_NAME}
 
 
 if [ "${HSMETRICS}" == 'true' ];then
