@@ -704,10 +704,11 @@ do
 			
 			echo "#############################################################################################"
 			echo "SAMTOOLS & AWK Calculate coverage per regions - `date` ID_ANALYSE : ${ID} - Run : ${RUN_BASEDIR_NAME} - SAMPLE : ${CURRENT_SAMPLE_BASEDIR_NAME}"
-			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS=\"\t\"}{a=(\$3-\$2+1);b=($7/a);print \$1,\$2,\$3,\$4,b,\"+\"}'  | ${AWK} 'BEGIN{FS=\",\";OFS=\"\t\"}{print \$1,\"+\" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv"
+			echo "COMMAND: ${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS=\"\t\"}{a=(\$3-\$2+1);b=($7/a);print \$1,\$2,\$3,\$4,b,\"+\",\"+\"}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv"
 			echo "#############################################################################################"
 
-			${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+"}'  | ${AWK} 'BEGIN{FS=",.";OFS="\t"}{print $1,"+" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
+			#${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+"}'  | ${AWK} 'BEGIN{FS=",.";OFS="\t"}{print $1,"+" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
+			${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+","+"}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
 			cp ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
 			
 			if [ "${PROTOCOL}" != 'wgs' ];then
