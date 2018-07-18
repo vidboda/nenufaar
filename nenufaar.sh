@@ -996,6 +996,11 @@ do
 			echo "#############################################################################################"
 			
 			${SRUN_24_COMMAND} ${JAVA} -jar -Djava.io.tmpdir=${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/DIR_GATK -Xmx${MAX_RAM}g ${GATK} -T VariantEval -R ${REF_PATH} -nt ${NB_THREAD} -o ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_VariantEval.table --eval ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf -D ${SNP_PATH} -gold ${INDEL1} -EV MetricsCollection
+			
+			#just cp vcf into output root dir for MobiCNV to be able to use them
+			mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/MobiVCF/
+			cp ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/MobiVCF/${CURRENT_SAMPLE_BASEDIR_NAME}.final.vcf
+		
 		fi
 		# CLEAN UP THE MESS
 		if [ "${CLEAN_UP}" == 'true' ];then
