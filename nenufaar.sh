@@ -709,7 +709,9 @@ do
 
 			#${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+"}'  | ${AWK} 'BEGIN{FS=",.";OFS="\t"}{print $1,"+" }'> ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
 			${SRUN_SIMPLE_COMMAND} ${SAMTOOLS} bedcov -Q 30 ${INTERVALS_BED} ${BAM} | ${SORT} -k1,1 -k2,2n -k3,3n | ${AWK} 'BEGIN {OFS="\t"}{a=($3-$2+1);b=($7/a);print $1,$2,$3,$4,b,"+","+"}' > ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
-			cp ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
+			#create centralised location for coverage file ready for MobiCNV analysis
+			mkdir ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/MobiCNVFiles
+			cp ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/${CURRENT_SAMPLE_BASEDIR_NAME}/${ID}/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv ${OUTPUT_PATH}${RUN_BASEDIR_NAME}/MobiCNVFiles/${CURRENT_SAMPLE_BASEDIR_NAME}_coverage.tsv
 			
 			if [ "${PROTOCOL}" != 'wgs' ];then
 				if [ "${CALLER}" == 'ug' ]; then
