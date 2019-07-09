@@ -304,7 +304,7 @@ Depending on -a (default, no annotation), the vcf is annotated with:
 
 --------------------------------------------------------------------------------
 
-**Montpellier Bioinformatique pour le Diagnostique Clinique (MoBiDiC)**
+**Montpellier Bioinformatique pour le Diagnostic Clinique (MoBiDiC)**
 
 *CHU de Montpellier*
 
