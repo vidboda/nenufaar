@@ -1,3 +1,6 @@
+> **DEPRECATION WARNING: Nenufaar is no longer maintained. If you are looking for a modern DNA-NGS workflow, have a look at [MobiDL](https://github.com/mobidic/MobiDL).**
+
+
 # Nenufaar v2.4
 
 DNA NGS pipeline
